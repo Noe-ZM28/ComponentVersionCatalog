@@ -20,32 +20,33 @@
     </header>
     <main class="wrap">
       <section id="home">
-        <div class="eyebrow">Knowledge & configuration management</div>
-        <h1>Component catalog</h1>
-        <p class="intro">A single place to find approved versions, review change history, and open the Jira ticket or
-          original location for each component.</p>
+        <div class="eyebrow">Catálogo de configuración</div>
+        <h1>Catálogo por proyecto</h1>
+        <p class="intro">Consulta PC1, reportes con layout y ejemplos, y paquetes de carriers con sus variantes.</p>
         <div class="notice"><strong>ⓘ</strong>
-          <div><strong>Prototype with fictitious data.</strong> Versions, ticket keys and locations are examples only.
-            “Latest recorded” and “latest approved” are tracked separately; a newer record does not automatically become
-            the approved version.</div>
+          <div><strong>Catálogo organizado por proyecto.</strong> Los archivos de reporte y ejemplos muestran el
+            contenido disponible en cada carpeta. El .rpt vacío se marca explícitamente.</div>
         </div>
         <div class="stats" id="stats"></div>
         <div class="layout">
           <section class="panel">
             <div class="section-head">
               <div>
-                <h2>Components</h2>
-                <div class="muted small">Select a component to view its details and history.</div>
-              </div><button class="btn" id="resetBtn">Reset filters</button>
+                <h2>Elementos del proyecto</h2>
+                <div class="muted small">Los elementos se agrupan por proyecto y tipo.</div>
+              </div><button class="btn" id="resetBtn">Limpiar filtros</button>
             </div>
             <div class="toolbar">
               <label class="search"><span>⌕</span><input id="searchInput" type="search"
-                  placeholder="Search name, carrier, ticket, or ID…"></label>
+                  placeholder="Buscar nombre, carrier, archivo o ID…"></label>
+              <select id="projectFilter" aria-label="Filter by project">
+                <option value="">Todos los proyectos</option>
+              </select>
               <select id="categoryFilter" aria-label="Filter by category">
-                <option value="">All categories</option>
+                <option value="">Todos los grupos</option>
               </select>
               <select id="statusFilter" aria-label="Filter by status">
-                <option value="">All statuses</option>
+                <option value="">Todos los estados</option>
                 <option>Approved</option>
                 <option>In Review</option>
                 <option>Draft</option>
@@ -56,44 +57,47 @@
               <table>
                 <thead>
                   <tr>
-                    <th>Component</th>
-                    <th>Category</th>
-                    <th>Approved version</th>
-                    <th>Latest recorded</th>
-                    <th>Status</th>
+                    <th>Elemento</th>
+                    <th>Proyecto</th>
+                    <th>Grupo</th>
+                    <th>Versión aprobada</th>
+                    <th>Última registrada</th>
+                    <th>Estado</th>
                     <th></th>
                   </tr>
                 </thead>
                 <tbody id="componentRows"></tbody>
               </table>
             </div>
-            <div class="empty" id="emptyState" hidden>No components match these filters.</div>
+            <div class="empty" id="emptyState" hidden>No hay elementos para estos filtros.</div>
           </section>
           <aside>
             <section class="panel">
-              <h2>Browse by category</h2>
+              <h2>Proyectos</h2>
+              <div class="category-grid" id="projectCards"></div>
+            </section>
+            <section class="panel">
+              <h2>Grupos</h2>
               <div class="category-grid" id="categoryCards"></div>
             </section>
             <section class="panel">
-              <h2>Catalog rules</h2>
-              <div class="side-block"><strong>Approved version</strong>
-                <p class="muted small">The latest version explicitly reviewed and approved for use.</p>
+              <h2>Notas del catálogo</h2>
+              <div class="side-block"><strong>Reportes</strong>
+                <p class="muted small">Cada reporte muestra su layout y ejemplo. Los .rpt y SP indicados están pendientes de agregar.</p>
               </div>
-              <div class="side-block"><strong>Latest recorded</strong>
-                <p class="muted small">The most recent version entered into the catalog, regardless of approval status.
-                </p>
+              <div class="side-block"><strong>Paquetes de carrier</strong>
+                <p class="muted small">Cada paquete agrupa sus variantes PDF. El archivo .pk3 se indica como pendiente si no está disponible.</p>
               </div>
-              <div class="side-block"><strong>Source of truth</strong>
-                <p class="muted small">The original file, database object or Jira attachment remains in its source
-                  location.</p>
+              <div class="side-block"><strong>PC1</strong>
+                <p class="muted small">El ejemplo de texto plano conserva el mapeo dentro del PC1.</p>
               </div>
-              <div class="small muted">Manual updates · Named owner · Ticket reference required</div>
+              <div class="small muted">Los PDF de Carrier enlazan los archivos incluidos en la carpeta del proyecto.</div>
             </section>
           </aside>
         </div>
       </section>
       <section id="detailView" class="detail">
-        <button class="btn back" id="backBtn">← Back to catalog</button>
+        <button class="btn back" id="backBtn">← Volver al catálogo</button>
         <div class="eyebrow" id="detailCategory"></div>
         <div class="section-head">
           <div>
@@ -103,25 +107,28 @@
         </div>
         <div class="panel" style="margin-top:18px">
           <div class="section-head">
-            <h2>Current reference</h2><span class="small muted" id="detailId"></span>
+            <h2>Detalle del elemento</h2><span class="small muted" id="detailId"></span>
           </div>
           <div class="detail-grid" id="detailGrid"></div>
           <p id="detailDescription" class="muted"></p>
+          <section class="examples">
+            <h2>Archivos del reporte</h2>
+            <div id="detailExamples"></div>
+          </section>
           <div class="tagline" id="detailLinks"></div>
           <div class="source-box">
-            <div class="label">Original source location</div>
+            <div class="label">Ubicación de origen</div>
             <div id="detailSource"></div>
           </div>
         </div>
         <div class="panel">
           <div class="section-head">
-            <h2>Change history</h2><span class="small muted" id="historyCount"></span>
+            <h2>Historial de cambios</h2><span class="small muted" id="historyCount"></span>
           </div>
           <div id="historyList"></div>
         </div>
       </section>
-      <footer class="footer"><span>Component Version Catalog · Prototype v0.1</span><span>Manual catalog · No live
-          connection to Jira, databases or file shares</span></footer>
+      <footer class="footer"><span>Catálogo por proyecto · Prototipo v0.1</span><span>Datos de ejemplo; sin conexión a Jira, bases de datos ni archivos de origen</span></footer>
     </main>
     <div class="toast" id="toast"></div>
   </div>

@@ -240,6 +240,15 @@ tbody tr:hover {
     background: #f8faff
 }
 
+.group-row th {
+    padding: 10px;
+    background: #edf2fa;
+    color: var(--navy);
+    font-size: 12px;
+    text-align: left;
+    letter-spacing: .04em
+}
+
 tbody tr:last-child td {
     border-bottom: 0
 }
@@ -406,9 +415,118 @@ tbody tr:last-child td {
 
 .detail-grid {
     display: grid;
-    grid-template-columns: repeat(3, minmax(0, 1fr));
+    grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
     gap: 10px;
     margin: 16px 0
+}
+
+.examples {
+    margin: 20px 0
+}
+
+.examples h2 {
+    margin-bottom: 10px
+}
+
+.variant-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+    gap: 10px
+}
+
+.example-card {
+    min-width: 0;
+    border: 1px solid var(--line);
+    border-radius: 9px;
+    background: #f7f9fc;
+    padding: 12px
+}
+
+.example-heading {
+    display: flex;
+    justify-content: space-between;
+    align-items: baseline;
+    gap: 10px;
+    margin-bottom: 8px
+}
+
+.package-file,
+.report-artifacts,
+.report-layout,
+.report-folder,
+.report-file-group {
+    padding: 10px 12px;
+    margin-bottom: 10px;
+    border: 1px solid var(--line);
+    border-radius: 8px;
+    background: #fff;
+    overflow-wrap: anywhere
+}
+
+.package-download {
+    display: block;
+    margin-top: 4px
+}
+
+.report-folder code,
+.report-file-group code {
+    display: block;
+    margin-top: 4px;
+    color: var(--muted);
+    overflow-wrap: anywhere
+}
+
+.report-file-group h3 {
+    margin-bottom: 8px
+}
+
+.report-file-list {
+    list-style: none;
+    padding: 0;
+    margin: 0
+}
+
+.report-file-list li {
+    display: grid;
+    grid-template-columns: minmax(140px, .7fr) minmax(180px, 1fr) auto;
+    gap: 8px;
+    align-items: baseline;
+    padding: 8px 0;
+    border-bottom: 1px solid var(--line)
+}
+
+.report-file-list li:last-child {
+    border-bottom: 0
+}
+
+.report-file-name {
+    overflow-wrap: anywhere
+}
+
+.report-layout p {
+    margin: 4px 0 0;
+    color: var(--muted)
+}
+
+.missing-file {
+    color: var(--amber);
+    font-size: 11px;
+    font-weight: 700
+}
+
+.example-card .label {
+    color: var(--muted);
+    font-size: 11px;
+    margin-bottom: 5px
+}
+
+.sample {
+    overflow: auto;
+    margin: 0;
+    color: var(--text);
+    font: 12px/1.55 Consolas, "Courier New", monospace;
+    white-space: pre-wrap;
+    overflow-wrap: anywhere
 }
 
 .detail-cell {
@@ -549,10 +667,6 @@ tbody tr:last-child td {
 
     .stat-number {
         font-size: 23px
-    }
-
-    .detail-grid {
-        grid-template-columns: 1fr 1fr
     }
 
     .category-grid {
