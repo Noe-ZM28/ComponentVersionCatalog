@@ -6,20 +6,22 @@ A static, browser-based prototype for manually consulting component versions, ap
 **All records, version numbers, ticket keys, people, and URLs are fictitious examples. Do not use them as operational references.**
 
 ## Run locally
-1. Keep `index.html` and `data.js` in the same folder.
+1. Keep the `css` and `js` folders next to `index.html`.
 2. Open `index.html` in a modern browser.
 3. Search, filter by category/status, open a component, and inspect its history.
 
 No build tools, external libraries, server, or database are required for this prototype.
 
 ## Files
-- `index.html`: UI, filtering, and detail/history rendering.
-- `data.js`: sample catalog data. Edit this file to replace demo entries with verified records.
+- `index.html`: UI structure.
+- `css/styles.css`: page styles.
+- `js/app.js`: filtering and detail/history rendering.
+- `js/data.js`: sample catalog data. Edit this file to replace demo entries with verified records.
 
 ## Manual update workflow (proposed)
 1. Identify the change ticket in Jira.
 2. Confirm the original source artifact/object and the actual version.
-3. Add a version entry in `data.js` with ticket, date, author, change summary, and status.
+3. Add a version entry in `js/data.js` with ticket, date, author, change summary, and status.
 4. Mark a version `Approved` only after the responsible person confirms its approval.
 5. Keep prior version entries for history.
 6. Review the page in a browser and submit the change through the team's approved Bitbucket workflow.
