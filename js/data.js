@@ -1,13 +1,28 @@
 // DEMO DATA ONLY. Replace illustrative report examples and missing artifacts with verified files.
-const demoVersion = (version, ticket, recordedDate, change, status = "Approved") => ({
+const demoVersion = (version, ticket, recordedDate, change, status = "Approved", author = "Demo user", notes = "") => ({
   version,
   status,
   recordedDate,
   ticket,
   ticketUrl: `https://example.com/jira/${ticket}`,
-  author: "Demo user",
-  change
+  author,
+  change,
+  notes
 });
+
+const demoHistory = (ticket, approvedDate, change, currentVersion = "1.0") => {
+  const [major, minor] = currentVersion.split(".").map(Number);
+  const previousVersion = minor > 0 ? `${major}.${minor - 1}` : `${Math.max(0, major - 1)}.9`;
+  const previousDate = new Date(`${approvedDate}T12:00:00Z`);
+  previousDate.setUTCDate(previousDate.getUTCDate() - 30);
+  const previousRecordedDate = previousDate.toISOString().slice(0, 10);
+
+  return [
+    demoVersion(`${major}.${minor + 1}`, `${ticket}-REV`, "2026-10-19", `Propuesta: ${change}`, "In Review", "Equipo de cambios", "Ejemplo ficticio pendiente de aprobación."),
+    demoVersion(currentVersion, ticket, approvedDate, change, "Approved", "Responsable del componente", "Ejemplo ficticio de aprobación vigente."),
+    demoVersion(previousVersion, `${ticket}-PREV`, previousRecordedDate, "Versión anterior conservada para consulta histórica.", "Deprecated", "Responsable anterior", "Ejemplo ficticio de versión reemplazada.")
+  ];
+};
 
 const pc1 = (id, project, name, fileName, content, date, ticket) => ({
   id,
@@ -23,7 +38,7 @@ const pc1 = (id, project, name, fileName, content, date, ticket) => ({
   description: "PC1 de ejemplo en texto plano. El mapeo se mantiene dentro del propio archivo PC1.",
   sourceLabel: `Ejemplo ilustrativo (${fileName})`,
   example: { name: fileName, format: "Texto plano", content },
-  versions: [demoVersion("1.0", ticket, date, "Ejemplo inicial de PC1 con mapeo incluido.")]
+  versions: demoHistory(ticket, date, "Actualización de reglas de mapeo del PC1.", content.match(/VERSION=(\d+\.\d+)/)?.[1] || "1.0")
 });
 
 const report = (id, project, name, outputFormat, folder, reportFiles, exampleFiles, date, ticket) => ({
@@ -43,7 +58,7 @@ const report = (id, project, name, outputFormat, folder, reportFiles, exampleFil
   reportFiles,
   exampleFiles,
   sourceLabel: folder,
-  versions: [demoVersion("1.0", ticket, date, `Registro de archivos del reporte ${outputFormat} y su ejemplo.`)]
+  versions: demoHistory(ticket, date, `Actualización de archivos y ejemplo del reporte ${outputFormat}.`)
 });
 
 const carrierPackage = (id, project, packageNumber, design, variants, date) => ({
@@ -64,7 +79,7 @@ const carrierPackage = (id, project, packageNumber, design, variants, date) => (
     ...variant,
     file: `Carriers/${project}/Paquete ${packageNumber}/Example/${variant.fileName}`
   })),
-  versions: [demoVersion("1.0", `DEMO-${id}`, date, `Paquete ${packageNumber}, Design ${design}, con ${variants.length} variantes PDF.`)]
+  versions: demoHistory(`DEMO-${id}`, date, `Actualización de variantes del paquete ${packageNumber}.`)
 });
 
 const CATALOG = [
