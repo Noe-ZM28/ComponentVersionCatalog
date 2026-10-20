@@ -82,22 +82,83 @@ const CATALOG = [
     "Reports/Proyecto 1/Reporte 1",
     [
       { label: "Crystal Reports (.rpt)", name: "MontlyReport.rpt", path: "Reports/Proyecto 1/Reporte 1/MontlyReport.rpt", sizeBytes: 0 },
-      { label: "Consulta / procedimiento SQL", name: "MontlyReport.sql", path: "Reports/Proyecto 1/Reporte 1/MontlyReport.sql", sizeBytes: 2569 }
+      { label: "Consulta / procedimiento SQL", name: "MontlyReport.sql", path: "Reports/Proyecto 1/Reporte 1/MontlyReport.sql", sizeBytes: 2569, preview: `SET NOCOUNT ON;
+GO
+
+CREATE PROCEDURE dbo.usp_Report_MonthlyCardProduction
+    @Year  INT,
+    @Month INT
+AS
+BEGIN
+    SET NOCOUNT ON;
+
+    IF @Year < 2000 OR @Year > 2100
+    BEGIN
+        RAISERROR('The year must be between 2000 and 2100.', 16, 1);
+        RETURN;
+    END;`, previewTruncated: true }
     ],
     [{ label: "Ejemplo PDF", name: "July2026.pdf", path: "Reports/Proyecto 1/Reporte 1/Example/July2026.pdf", sizeBytes: 28767 }],
     "2026-10-19", "DEMO-P1-RPT1"),
   report("RPT-P1-002", "Proyecto 1", "Reporte RCP", "Archivo RCP",
     "Reports/Proyecto 1/Reporte 2",
     [
-      { label: "Generador · RefID SCRXXX000001", name: "SCRXXX000001.cs", path: "Reports/Proyecto 1/Reporte 2/SCRXXX000001.cs", sizeBytes: 1727 },
-      { label: "SP / consulta SQL", name: "RCPReport.sql", path: "Reports/Proyecto 1/Reporte 2/RCPReport.sql", sizeBytes: 1324 }
+      { label: "Generador · RefID SCRXXX000001", name: "SCRXXX000001.cs", path: "Reports/Proyecto 1/Reporte 2/SCRXXX000001.cs", sizeBytes: 1727, preview: `using System;
+using System.IO;
+using ScriptLib;
+using System.Collections.Generic;
+using System.Linq;
+using System.Text;
+
+public partial class Script
+{
+    protected override void Initialize()
+    {
+        List<Data> exists =
+            f.ExecuteSPGetReturnCode<Data>("usp_ReceiveRCP_Dummy");`, previewTruncated: true },
+      { label: "SP / consulta SQL", name: "RCPReport.sql", path: "Reports/Proyecto 1/Reporte 2/RCPReport.sql", sizeBytes: 1324, preview: `CREATE OR ALTER PROCEDURE dbo.usp_ReceiveRCP_Dummy
+    @RecordType  CHAR(3),
+    @FileId      CHAR(10),
+    @RecordCount CHAR(7),
+    @FileDate    CHAR(8),
+    @FileName    CHAR(72)
+AS
+BEGIN
+    SET NOCOUNT ON;
+
+    IF LTRIM(RTRIM(@RecordType)) = ''
+    BEGIN
+        RAISERROR('RecordType es obligatorio.', 16, 1);
+        RETURN;
+    END;`, previewTruncated: true }
     ],
-    [{ label: "Ejemplo RCP", name: "20261019.RCP", path: "Reports/Proyecto 1/Reporte 2/Example/20261019.RCP", sizeBytes: 100 }],
+    [{ label: "Ejemplo RCP", name: "20261019.RCP", path: "Reports/Proyecto 1/Reporte 2/Example/20261019.RCP", sizeBytes: 100, preview: "RCPFILE000001000000120261019CARD_PRODUCTION_20261019.RCP" }],
     "2026-10-19", "DEMO-P1-RPT2"),
   report("RPT-P2-001", "Proyecto 2", "Reporte de producción", "Archivo de texto",
     "Reports/Proyecto 2/Reporte 1",
-    [{ label: "Generador · RefID SCRYYY000001", name: "SCRYYY000001.cs", path: "Reports/Proyecto 2/Reporte 1/SCRYYY000001.cs", sizeBytes: 3405 }],
-    [{ label: "Ejemplo de salida", name: "Production20261019.txt", path: "Reports/Proyecto 2/Reporte 1/Example/Production20261019.txt", sizeBytes: 5098 }],
+    [{ label: "Generador · RefID SCRYYY000001", name: "SCRYYY000001.cs", path: "Reports/Proyecto 2/Reporte 1/SCRYYY000001.cs", sizeBytes: 3405, preview: `using System;
+using System.IO;
+using System.Collections.Generic;
+using System.Text;
+using ScriptLib;
+
+public class ProductionData
+{
+    public string RecordType { get; set; }
+    public string CardId { get; set; }
+    public string ProductionDate { get; set; }
+    public string CardProduct { get; set; }
+    public string Status { get; set; }
+}
+
+public partial class Script
+{
+    protected override void Initialize()
+    {
+        string date = DateTime.Now.ToString("yyyyMMdd");`, previewTruncated: true }],
+    [{ label: "Ejemplo de salida", name: "Production20261019.txt", path: "Reports/Proyecto 2/Reporte 1/Example/Production20261019.txt", sizeBytes: 5098, preview: `PRDCARD202610190000000120261019DEBIT_CLASSIC       APPROVED  BATCH20261019001    PLANT_MX_01
+PRDCARD202610190000000220261018CREDIT_GOLD         APPROVED  BATCH20261018001    PLANT_MX_02
+PRDCARD202610190000000320261017PREPAID             APPROVED  BATCH20261017001    PLANT_MX_03`, previewTruncated: true }],
     "2026-10-19", "DEMO-P2-RPT1"),
 
   carrierPackage("CAR-P1-P1", "Proyecto 1", "1", "1", [

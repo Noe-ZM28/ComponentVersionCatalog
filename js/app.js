@@ -10,24 +10,13 @@ const dateLabel = d => d ? new Date(d + "T12:00:00").toLocaleDateString("en-GB",
 function init() {
   projects.forEach(project => $('projectFilter').insertAdjacentHTML('beforeend', `<option>${escapeHtml(project)}</option>`));
   categories.forEach(c => $('categoryFilter').insertAdjacentHTML('beforeend', `<option>${escapeHtml(c)}</option>`));
-  renderStats(); renderProjects(); renderCategories(); renderRows();
+  renderProjects(); renderCategories(); renderRows();
   $('searchInput').addEventListener('input', renderRows);
   $('projectFilter').addEventListener('change', () => { renderProjects(); renderRows() });
   $('categoryFilter').addEventListener('change', () => { renderCategories(); renderRows() });
   $('statusFilter').addEventListener('change', renderRows);
   $('resetBtn').addEventListener('click', () => { $('searchInput').value = ''; $('projectFilter').value = ''; $('categoryFilter').value = ''; $('statusFilter').value = ''; renderProjects(); renderCategories(); renderRows() });
   $('backBtn').addEventListener('click', showHome);
-}
-function renderStats() {
-  const approved = CATALOG.filter(c => c.versions.some(v => v.status === 'Approved')).length;
-  const review = CATALOG.filter(c => c.status === 'In Review').length;
-  const pending = CATALOG.filter(c => c.status === 'Pending verification').length;
-  $('stats').innerHTML = [
-    ['Elementos', CATALOG.length, 'En PC1, reportes y carriers'],
-    ['Aprobados', approved, 'Con al menos una versión aprobada'],
-    ['En revisión', review, 'Registros pendientes de aprobación'],
-    ['Por verificar', pending, 'Fuente o versión pendiente de confirmar']
-  ].map(x => `<div class="stat"><div class="stat-label">${x[0]}</div><div class="stat-number">${x[1]}</div><div class="stat-note">${x[2]}</div></div>`).join('');
 }
 function renderProjects() {
   const selected = $('projectFilter').value;
@@ -70,6 +59,7 @@ function renderExamples(c) {
       <div class="variant-grid">${c.variants.map(v => `<article class="example-card">
       <div class="example-heading"><strong>${escapeHtml(v.name)}</strong><span class="small muted">PDF</span></div>
       <a class="link" href="${escapeHtml(encodeURI(v.file))}" target="_blank" rel="noopener">${escapeHtml(v.fileName)} ↗</a>
+      ${renderFilePreview({ name: v.fileName, path: v.file })}
     </article>`).join('')}</div></div>`;
   }
   if (c.reportFiles) {
@@ -77,7 +67,7 @@ function renderExamples(c) {
       <span>${escapeHtml(file.label)}</span>
       ${file.sizeBytes === 0
         ? `<span class="report-file-name">${escapeHtml(file.name)}</span><span class="missing-file">Archivo vacío (0 bytes)</span>`
-        : `<a class="link report-file-name" href="${escapeHtml(encodeURI(file.path))}" target="_blank" rel="noopener">${escapeHtml(file.name)} ↗</a><span class="small muted">${file.sizeBytes.toLocaleString("es-MX")} bytes</span>`}
+        : `<div><a class="link report-file-name" href="${escapeHtml(encodeURI(file.path))}" target="_blank" rel="noopener">${escapeHtml(file.name)} ↗</a>${renderFilePreview(file)}</div><span class="small muted">${file.sizeBytes.toLocaleString("es-MX")} bytes</span>`}
     </li>`).join('')}</ul>`;
     return `<div class="report-folder"><strong>Carpeta del reporte</strong><code>${escapeHtml(c.reportFolder)}/</code></div>
       <div class="report-file-group"><h3>Archivos del reporte</h3>${renderFiles(c.reportFiles)}</div>
@@ -90,6 +80,24 @@ function renderExamples(c) {
     <div class="example-heading"><strong>${escapeHtml(c.example.name)}</strong><span class="small muted">${escapeHtml(c.example.format)}</span></div>
     <pre class="sample">${escapeHtml(c.example.content)}</pre>
   </article>`;
+}
+function renderFilePreview(file) {
+  const extension = file.name.split(".").pop().toLowerCase();
+  if (["rpt", "pkg3", "pgk3"].includes(extension)) return "";
+
+  if (extension === "pdf") {
+    const path = escapeHtml(encodeURI(file.path));
+    return `<details class="file-preview">
+      <summary>Previsualizar PDF</summary>
+      <iframe src="${path}" title="Vista previa de ${escapeHtml(file.name)}" loading="lazy"></iframe>
+    </details>`;
+  }
+
+  if (!file.preview) return "";
+  return `<details class="file-preview">
+    <summary>Previsualizar archivo</summary>
+    <pre class="sample">${escapeHtml(file.preview)}${file.previewTruncated ? "\n\n… Vista parcial. Abre el archivo para ver el contenido completo." : ""}</pre>
+  </details>`;
 }
 function showHome() { $('home').style.display = ''; $('detailView').classList.remove('active'); window.scrollTo({ top: 0, behavior: 'smooth' }) }
 function showDetail(id) {

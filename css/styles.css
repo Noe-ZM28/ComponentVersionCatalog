@@ -503,6 +503,38 @@ tbody tr:last-child td {
     overflow-wrap: anywhere
 }
 
+.file-preview {
+    margin-top: 7px
+}
+
+.file-preview summary {
+    width: fit-content;
+    color: var(--blue);
+    font-size: 12px;
+    cursor: pointer;
+    font-weight: 650
+}
+
+.file-preview .sample {
+    max-height: 280px;
+    overflow: auto;
+    margin-top: 8px;
+    padding: 10px;
+    border: 1px solid var(--line);
+    border-radius: 7px;
+    background: #f7f9fc
+}
+
+.file-preview iframe {
+    display: block;
+    width: min(100%, 760px);
+    height: 480px;
+    margin-top: 8px;
+    border: 1px solid var(--line);
+    border-radius: 7px;
+    background: #fff
+}
+
 .report-layout p {
     margin: 4px 0 0;
     color: var(--muted)

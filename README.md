@@ -20,6 +20,10 @@ No build tools, external libraries, server, or database are required for this pr
 - `Carriers/`: each package has its `.pkg3` file under `RichPDFPackage/` and its variant PDF examples under `Example/`.
 - `Reports/`: report source files and output examples, grouped by project and report.
 
+## File previews
+- PDF files can be previewed inline in the browser; text, SQL, C# and RCP files show an excerpt alongside their links.
+- `.rpt` and `.pkg3` package files are intentionally excluded from previews.
+
 ## Manual update workflow (proposed)
 1. Identify the change ticket in Jira.
 2. Confirm the original source artifact/object and the actual version.
