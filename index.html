@@ -1,0 +1,132 @@
+<!doctype html>
+<html lang="es">
+
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Component Version Catalog</title>
+  <link rel="stylesheet" href="styles.css">
+</head>
+
+<body>
+  <div class="app">
+    <header class="topbar">
+      <div class="brand">
+        <div class="brandmark">VC</div>
+        <div>Component Version Catalog<div class="topmeta">Internal reference · Prototype</div>
+        </div>
+      </div>
+      <div class="topmeta">DEMO DATA · NOT FOR PRODUCTION USE</div>
+    </header>
+    <main class="wrap">
+      <section id="home">
+        <div class="eyebrow">Knowledge & configuration management</div>
+        <h1>Component catalog</h1>
+        <p class="intro">A single place to find approved versions, review change history, and open the Jira ticket or
+          original location for each component.</p>
+        <div class="notice"><strong>ⓘ</strong>
+          <div><strong>Prototype with fictitious data.</strong> Versions, ticket keys and locations are examples only.
+            “Latest recorded” and “latest approved” are tracked separately; a newer record does not automatically become
+            the approved version.</div>
+        </div>
+        <div class="stats" id="stats"></div>
+        <div class="layout">
+          <section class="panel">
+            <div class="section-head">
+              <div>
+                <h2>Components</h2>
+                <div class="muted small">Select a component to view its details and history.</div>
+              </div><button class="btn" id="resetBtn">Reset filters</button>
+            </div>
+            <div class="toolbar">
+              <label class="search"><span>⌕</span><input id="searchInput" type="search"
+                  placeholder="Search name, carrier, ticket, or ID…"></label>
+              <select id="categoryFilter" aria-label="Filter by category">
+                <option value="">All categories</option>
+              </select>
+              <select id="statusFilter" aria-label="Filter by status">
+                <option value="">All statuses</option>
+                <option>Approved</option>
+                <option>In Review</option>
+                <option>Draft</option>
+                <option>Deprecated</option>
+              </select>
+            </div>
+            <div class="table-wrap">
+              <table>
+                <thead>
+                  <tr>
+                    <th>Component</th>
+                    <th>Category</th>
+                    <th>Approved version</th>
+                    <th>Latest recorded</th>
+                    <th>Status</th>
+                    <th></th>
+                  </tr>
+                </thead>
+                <tbody id="componentRows"></tbody>
+              </table>
+            </div>
+            <div class="empty" id="emptyState" hidden>No components match these filters.</div>
+          </section>
+          <aside>
+            <section class="panel">
+              <h2>Browse by category</h2>
+              <div class="category-grid" id="categoryCards"></div>
+            </section>
+            <section class="panel">
+              <h2>Catalog rules</h2>
+              <div class="side-block"><strong>Approved version</strong>
+                <p class="muted small">The latest version explicitly reviewed and approved for use.</p>
+              </div>
+              <div class="side-block"><strong>Latest recorded</strong>
+                <p class="muted small">The most recent version entered into the catalog, regardless of approval status.
+                </p>
+              </div>
+              <div class="side-block"><strong>Source of truth</strong>
+                <p class="muted small">The original file, database object or Jira attachment remains in its source
+                  location.</p>
+              </div>
+              <div class="small muted">Manual updates · Named owner · Ticket reference required</div>
+            </section>
+          </aside>
+        </div>
+      </section>
+      <section id="detailView" class="detail">
+        <button class="btn back" id="backBtn">← Back to catalog</button>
+        <div class="eyebrow" id="detailCategory"></div>
+        <div class="section-head">
+          <div>
+            <h1 id="detailName"></h1>
+            <div class="muted" id="detailSubtitle"></div>
+          </div><span id="detailStatus"></span>
+        </div>
+        <div class="panel" style="margin-top:18px">
+          <div class="section-head">
+            <h2>Current reference</h2><span class="small muted" id="detailId"></span>
+          </div>
+          <div class="detail-grid" id="detailGrid"></div>
+          <p id="detailDescription" class="muted"></p>
+          <div class="tagline" id="detailLinks"></div>
+          <div class="source-box">
+            <div class="label">Original source location</div>
+            <div id="detailSource"></div>
+          </div>
+        </div>
+        <div class="panel">
+          <div class="section-head">
+            <h2>Change history</h2><span class="small muted" id="historyCount"></span>
+          </div>
+          <div id="historyList"></div>
+        </div>
+      </section>
+      <footer class="footer"><span>Component Version Catalog · Prototype v0.1</span><span>Manual catalog · No live
+          connection to Jira, databases or file shares</span></footer>
+    </main>
+    <div class="toast" id="toast"></div>
+  </div>
+  <script src="data.js"></script>
+  <script src="app.js"></script>
+</body>
+
+</html>
