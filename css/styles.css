@@ -160,11 +160,45 @@ h3 {
     font-size: 11px
 }
 
+.filter-label {
+    display: block;
+    margin-bottom: 8px;
+    font-size: 18px;
+    font-weight: 700
+}
+
+.project-select {
+    width: 100%;
+    min-height: 44px;
+    border-color: #cbd8ee;
+    background-color: #fff
+}
+
+.project-selection-prompt {
+    padding: 18px;
+    border: 1px solid var(--line);
+    border-radius: 13px;
+    background: var(--panel);
+    color: var(--muted);
+    text-align: center;
+    box-shadow: var(--shadow)
+}
+
 .layout {
     display: grid;
-    grid-template-columns: minmax(0, 1fr) 310px;
+    grid-template-columns: minmax(0, 1fr);
     gap: 18px;
     align-items: start
+}
+
+.layout[hidden] {
+    display: none
+}
+
+.catalog-filters {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) minmax(0, 2fr);
+    gap: 18px
 }
 
 .panel {
@@ -172,12 +206,6 @@ h3 {
     margin-bottom: 18px
 }
 
-.toolbar {
-    display: flex;
-    gap: 10px;
-    flex-wrap: wrap;
-    margin: 16px 0
-}
 
 .search {
     flex: 1;
@@ -377,22 +405,47 @@ tbody tr:last-child td {
 }
 
 .category-grid {
-    display: grid;
-    grid-template-columns: repeat(2, minmax(0, 1fr));
+    display: flex;
+    justify-content: center;
+    flex-wrap: wrap;
     gap: 9px
 }
 
 .category {
+    flex: 1 1 calc(25% - 9px);
+    max-width: calc(25% - 7px);
     border: 1px solid var(--line);
     border-radius: 9px;
     padding: 11px;
     background: #fff;
-    text-align: left
+    text-align: center
+}
+
+.category:disabled {
+    background: #f0f2f5;
+    border-color: #e1e4e9;
+    color: #969eaa;
+    cursor: not-allowed
+}
+
+.category:disabled strong {
+    color: inherit
+}
+
+.category-prompt {
+    margin: 0 0 10px;
+    color: var(--muted);
+    font-size: 13px
 }
 
 .category.active {
     border-color: #8aa9e8;
     background: var(--blue-soft)
+}
+
+.category:disabled.active {
+    border-color: #e1e4e9;
+    background: #f0f2f5
 }
 
 .category strong {
@@ -411,6 +464,40 @@ tbody tr:last-child td {
 
 .detail.active {
     display: block
+}
+
+.detail-tabs {
+    display: flex;
+    gap: 8px;
+    border-bottom: 1px solid var(--line);
+    margin: 18px 0
+}
+
+.detail-tab {
+    border: 0;
+    border-bottom: 2px solid transparent;
+    background: transparent;
+    color: var(--muted);
+    padding: 10px 12px;
+    font-weight: 700
+}
+
+.detail-tab.active {
+    border-bottom-color: var(--blue);
+    color: var(--blue)
+}
+
+.detail-pane {
+    display: none
+}
+
+.detail-pane.active {
+    display: block
+}
+
+.detail-tab span {
+    font-size: 11px;
+    font-weight: 600
 }
 
 .detail-grid {
@@ -591,6 +678,165 @@ tbody tr:last-child td {
     border-bottom: 0
 }
 
+.history-content {
+    min-width: 0
+}
+
+.history-ticket-status {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    margin-right: 4px
+}
+
+.history-ticket-status .small {
+    font-weight: 650
+}
+
+.history-ticket {
+    display: flex;
+    align-items: center;
+    gap: 9px;
+    flex-wrap: wrap;
+    width: fit-content;
+    padding: 8px 11px;
+    margin: 10px 0;
+    border: 1px solid #cbd8ee;
+    border-radius: 8px;
+    background: var(--blue-soft)
+}
+
+.history-ticket-label {
+    color: var(--muted);
+    font-size: 11px;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: .04em
+}
+
+.history-ticket-link {
+    color: var(--blue);
+    font-size: 14px;
+    font-weight: 800;
+    text-decoration: none
+}
+
+.history-ticket-link:hover {
+    text-decoration: underline
+}
+
+.history-snapshot {
+    border: 1px solid var(--line);
+    border-radius: 9px;
+    background: #f7f9fc;
+    padding: 12px;
+    margin: 10px 0
+}
+
+.history-snapshot .sample {
+    max-height: 260px;
+    overflow: auto
+}
+
+.change-preview {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 10px
+}
+
+.change-side {
+    min-width: 0
+}
+
+.change-label {
+    color: var(--muted);
+    font-size: 11px;
+    font-weight: 750;
+    margin-bottom: 5px
+}
+
+.change-side .sample {
+    max-height: 260px;
+    overflow: auto;
+    padding: 10px;
+    border: 1px solid var(--line);
+    border-radius: 7px;
+    background: #fff
+}
+
+.change-side.before .sample {
+    border-left: 3px solid var(--red)
+}
+
+.change-side.after .sample {
+    border-left: 3px solid var(--green)
+}
+
+.history-files {
+    margin-top: 10px
+}
+
+.history-files summary {
+    width: fit-content;
+    margin-bottom: 9px;
+    color: var(--blue);
+    font-size: 12px;
+    font-weight: 700;
+    cursor: pointer
+}
+
+.history-files:not([open]) summary {
+    margin-bottom: 0
+}
+
+.history-file-card iframe {
+    display: block;
+    width: 100%;
+    height: 300px;
+    margin-top: 8px;
+    border: 1px solid var(--line);
+    border-radius: 7px;
+    background: #fff
+}
+
+.history-file-card .link {
+    display: inline-block;
+    margin-bottom: 8px
+}
+
+.history-file-sample {
+    max-height: 240px;
+    overflow: auto;
+    padding: 10px;
+    border: 1px solid var(--line);
+    border-radius: 7px;
+    background: #fff
+}
+
+.diff-line {
+    display: block;
+    min-height: 1.55em
+}
+
+.diff-line.removed {
+    background: var(--red-soft)
+}
+
+.diff-line.added {
+    background: var(--green-soft)
+}
+
+.demo-label {
+    margin-top: 8px;
+    color: var(--amber);
+    font-size: 11px;
+    font-weight: 700
+}
+
+.history-notice {
+    margin: -3px 0 4px
+}
+
 .history-version {
     font-weight: 800;
     color: var(--blue)
@@ -631,20 +877,7 @@ tbody tr:last-child td {
 .back {
     margin-bottom: 14px
 }
-
-.source-box {
-    background: #f7f9fc;
-    border-radius: 9px;
-    padding: 12px;
-    margin-top: 10px;
-    overflow-wrap: anywhere
-}
-
-.source-box .label {
-    color: var(--muted);
-    font-size: 11px
-}
-
+W
 .toast {
     display: none;
     position: fixed;
@@ -667,6 +900,10 @@ tbody tr:last-child td {
         grid-template-columns: 1fr
     }
 
+    .catalog-filters {
+        grid-template-columns: 1fr
+    }
+
     .stats {
         grid-template-columns: repeat(2, minmax(0, 1fr))
     }
@@ -677,6 +914,17 @@ tbody tr:last-child td {
 
     .wrap {
         padding: 22px 16px 36px
+    }
+}
+
+@media(max-width:560px) {
+    .change-preview {
+        grid-template-columns: 1fr
+    }
+
+    .history-item {
+        grid-template-columns: 1fr;
+        gap: 8px
     }
 
     .topmeta {
@@ -699,10 +947,6 @@ tbody tr:last-child td {
 
     .stat-number {
         font-size: 23px
-    }
-
-    .category-grid {
-        grid-template-columns: 1fr 1fr
     }
 
     .panel {

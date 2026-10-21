@@ -22,41 +22,36 @@
         <div class="eyebrow">Catálogo de configuración</div>
         <h1>Catálogo por proyecto</h1>
         <p class="intro">Consulta PC1, reportes con layout y ejemplos, y paquetes de carriers con sus variantes.</p>
-        <div class="layout">
+        <div class="catalog-filters">
+          <section class="panel">
+            <label class="filter-label" for="projectFilter">Proyectos</label>
+            <select id="projectFilter" class="project-select" aria-label="Filtrar por proyecto">
+              <option value="">Selecciona un proyecto</option>
+            </select>
+          </section>
+          <section class="panel">
+            <h2>Componentes</h2>
+            <p id="categoryPrompt" class="category-prompt"></p>
+            <div class="category-grid" id="categoryCards"></div>
+          </section>
+        </div>
+        <p id="projectSelectionPrompt" class="project-selection-prompt">Selecciona un proyecto primero para ver sus elementos.</p>
+        <div class="layout" id="projectElementsView" hidden>
           <section class="panel">
             <div class="section-head">
               <div>
                 <h2>Elementos del proyecto</h2>
                 <div class="muted small">Los elementos se agrupan por proyecto y tipo.</div>
-              </div><button class="btn" id="resetBtn">Limpiar filtros</button>
-            </div>
-            <div class="toolbar">
-              <label class="search"><span>⌕</span><input id="searchInput" type="search"
-                  placeholder="Buscar nombre, carrier, archivo o ID…"></label>
-              <select id="projectFilter" aria-label="Filter by project">
-                <option value="">Todos los proyectos</option>
-              </select>
-              <select id="categoryFilter" aria-label="Filter by category">
-                <option value="">Todos los grupos</option>
-              </select>
-              <select id="statusFilter" aria-label="Filter by status">
-                <option value="">Todos los estados</option>
-                <option>Approved</option>
-                <option>In Review</option>
-                <option>Draft</option>
-                <option>Deprecated</option>
-              </select>
+              </div>
             </div>
             <div class="table-wrap">
               <table>
                 <thead>
                   <tr>
-                    <th>Elemento</th>
+                    <th>Nombre del elemento</th>
                     <th>Proyecto</th>
-                    <th>Grupo</th>
-                    <th>Versión aprobada</th>
+                    <th>Tipo</th>
                     <th>Última registrada</th>
-                    <th>Estado</th>
                     <th></th>
                   </tr>
                 </thead>
@@ -65,29 +60,6 @@
             </div>
             <div class="empty" id="emptyState" hidden>No hay elementos para estos filtros.</div>
           </section>
-          <aside>
-            <section class="panel">
-              <h2>Proyectos</h2>
-              <div class="category-grid" id="projectCards"></div>
-            </section>
-            <section class="panel">
-              <h2>Grupos</h2>
-              <div class="category-grid" id="categoryCards"></div>
-            </section>
-            <section class="panel">
-              <h2>Notas del catálogo</h2>
-              <div class="side-block"><strong>Reportes</strong>
-                <p class="muted small">Cada reporte muestra su layout y ejemplo. Los .rpt y SP indicados están pendientes de agregar.</p>
-              </div>
-              <div class="side-block"><strong>Paquetes de carrier</strong>
-                <p class="muted small">Cada paquete agrupa sus variantes PDF. El archivo .pk3 se indica como pendiente si no está disponible.</p>
-              </div>
-              <div class="side-block"><strong>PC1</strong>
-                <p class="muted small">El ejemplo de texto plano conserva el mapeo dentro del PC1.</p>
-              </div>
-              <div class="small muted">Los PDF de Carrier enlazan los archivos incluidos en la carpeta del proyecto.</div>
-            </section>
-          </aside>
         </div>
       </section>
       <section id="detailView" class="detail">
@@ -97,30 +69,36 @@
           <div>
             <h1 id="detailName"></h1>
             <div class="muted" id="detailSubtitle"></div>
-          </div><span id="detailStatus"></span>
-        </div>
-        <div class="panel" style="margin-top:18px">
-          <div class="section-head">
-            <h2>Detalle del elemento</h2><span class="small muted" id="detailId"></span>
-          </div>
-          <div class="detail-grid" id="detailGrid"></div>
-          <p id="detailDescription" class="muted"></p>
-          <section class="examples">
-            <h2>Archivos del reporte</h2>
-            <div id="detailExamples"></div>
-          </section>
-          <div class="tagline" id="detailLinks"></div>
-          <div class="source-box">
-            <div class="label">Ubicación de origen</div>
-            <div id="detailSource"></div>
           </div>
         </div>
-        <div class="panel">
-          <div class="section-head">
-            <h2>Historial de cambios</h2><span class="small muted" id="historyCount"></span>
+        <nav class="detail-tabs" role="tablist" aria-label="Vistas del elemento">
+          <button id="detailTab" class="detail-tab active" type="button" role="tab" aria-controls="componentDetailPane" data-detail-tab="componentDetailPane" aria-selected="true">Detalle</button>
+          <button id="historyTab" class="detail-tab" type="button" role="tab" aria-controls="historyPane" data-detail-tab="historyPane" aria-selected="false">Histórico <span id="historyCount"></span></button>
+        </nav>
+        <section id="componentDetailPane" class="detail-pane active" role="tabpanel" aria-labelledby="detailTab">
+          <div class="panel">
+            <div class="section-head">
+              <h2>Detalle del elemento</h2><span class="small muted" id="detailId"></span>
+            </div>
+            <div class="detail-grid" id="detailGrid"></div>
+            <p id="detailDescription" class="muted"></p>
+            <section class="examples">
+              <h2>Archivos del reporte</h2>
+              <div id="detailExamples"></div>
+            </section>
+            <div class="tagline" id="detailLinks"></div>
+            <div class="source-box">
+            </div>
           </div>
-          <div id="historyList"></div>
-        </div>
+        </section>
+        <section id="historyPane" class="detail-pane" role="tabpanel" aria-labelledby="historyTab">
+          <div class="panel">
+            <div class="section-head">
+              <h2>Histórico de cambios</h2>
+            </div>
+            <div id="historyList"></div>
+          </div>
+        </section>
       </section>
       <footer class="footer"><span>Catálogo por proyecto · Prototipo v0.1</span></footer>
     </main>

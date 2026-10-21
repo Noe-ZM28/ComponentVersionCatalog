@@ -1,51 +1,110 @@
 // DEMO DATA ONLY. Replace illustrative report examples and missing artifacts with verified files.
-const demoVersion = (version, ticket, recordedDate, change, status = "Approved", author = "Demo user", notes = "") => ({
+const demoVersion = (version, ticket, recordedDate, change, snapshot, status = "Approved", author = "Demo user", notes = "", previewBefore = "", previewAfter = "") => ({
   version,
   status,
+  ticketStatus: status,
   recordedDate,
   ticket,
   ticketUrl: `https://example.com/jira/${ticket}`,
   author,
   change,
+  snapshot,
+  previewBefore,
+  previewAfter,
   notes
 });
 
-const demoHistory = (ticket, approvedDate, change, currentVersion = "1.0") => {
+const randomSample = items => {
+  const shuffled = [...items];
+  for (let index = shuffled.length - 1; index > 0; index--) {
+    const randomIndex = Math.floor(Math.random() * (index + 1));
+    [shuffled[index], shuffled[randomIndex]] = [shuffled[randomIndex], shuffled[index]];
+  }
+  return shuffled.slice(0, 1 + Math.floor(Math.random() * shuffled.length));
+};
+
+const demoHistory = (ticket, approvedDate, change, currentVersion = "1.0", example = "Ejemplo ilustrativo del elemento.", previews = {}) => {
   const [major, minor] = currentVersion.split(".").map(Number);
   const previousVersion = minor > 0 ? `${major}.${minor - 1}` : `${Math.max(0, major - 1)}.9`;
   const previousDate = new Date(`${approvedDate}T12:00:00Z`);
   previousDate.setUTCDate(previousDate.getUTCDate() - 30);
   const previousRecordedDate = previousDate.toISOString().slice(0, 10);
+  const snapshotFor = version => example.replace(/\bVERSION=\d+\.\d+\b/, `VERSION=${version}`);
+  const previousExample = previews.before || example;
+  const currentExample = previews.current || example;
+  const proposedExample = previews.proposed || example;
+  const currentChange = previews.currentChange || change;
+  const proposedChange = previews.proposedChange || change;
+  const previewBefore = sample => Object.keys(previews).length ? sample : "";
 
   return [
-    demoVersion(`${major}.${minor + 1}`, `${ticket}-REV`, "2026-10-19", `Propuesta: ${change}`, "In Review", "Equipo de cambios", "Ejemplo ficticio pendiente de aprobación."),
-    demoVersion(currentVersion, ticket, approvedDate, change, "Approved", "Responsable del componente", "Ejemplo ficticio de aprobación vigente."),
-    demoVersion(previousVersion, `${ticket}-PREV`, previousRecordedDate, "Versión anterior conservada para consulta histórica.", "Deprecated", "Responsable anterior", "Ejemplo ficticio de versión reemplazada.")
+    demoVersion(`${major}.${minor + 1}`, `${ticket}-REV`, "2026-10-19", `Propuesta: ${proposedChange}`, snapshotFor(`${major}.${minor + 1}`), "In Review", "Equipo de cambios", "", previewBefore(currentExample), previewBefore(proposedExample)),
+    demoVersion(currentVersion, ticket, approvedDate, currentChange, snapshotFor(currentVersion), "Approved",  "", previewBefore(previousExample), previewBefore(currentExample)),
+    demoVersion(previousVersion, `${ticket}-PREV`, previousRecordedDate, "Versión anterior conservada para consulta histórica.", snapshotFor(previousVersion), "Deprecated", "Ejemplo ficticio de versión reemplazada.", "", previewBefore(previousExample))
   ];
 };
 
-const pc1 = (id, project, name, fileName, content, date, ticket) => ({
-  id,
-  project,
-  name,
-  category: "PC1",
-  carrier: "Compartido",
-  status: "Approved",
-  owner: "Equipo de configuración",
-  lastUpdated: date,
-  validation: "Ejemplo",
-  scope: name,
-  description: "PC1 de ejemplo en texto plano. El mapeo se mantiene dentro del propio archivo PC1.",
-  sourceLabel: `Ejemplo ilustrativo (${fileName})`,
-  example: { name: fileName, format: "Texto plano", content },
-  versions: demoHistory(ticket, date, "Actualización de reglas de mapeo del PC1.", content.match(/VERSION=(\d+\.\d+)/)?.[1] || "1.0")
-});
+const pc1RecordExample = recordNumber => {
+  const paddedNumber = String(recordNumber).padStart(3, "0");
+  const record = {
+    PAN: `1234 XXXX XX${String(recordNumber).padStart(2, "0")} 1234`,
+    RecordId: `DUMMY-RECORD-${paddedNumber}`,
+    CardHolderName: `DUMMY CARDHOLDER ${paddedNumber}`,
+    AddressLine1: `DUMMY ADDRESS LINE 1-${paddedNumber}`,
+    AddressLine2: `DUMMY ADDRESS LINE 2-${paddedNumber}`,
+    AddressLine3: `DUMMY CITY ${paddedNumber}`,
+    AddressLine4: `DUMMY STATE ${paddedNumber}`,
+    AddressLine5: `DUMMY POSTAL CODE ${paddedNumber}`,
+    AddressLine6: "DUMMY COUNTRY",
+    ChipData: `DUMMY_CHIP_${paddedNumber};CHIP-DUMMY-${paddedNumber}`,
+    Track: `TRACK-DUMMY-${paddedNumber}`
+  };
+
+  for (let index = 1; index <= 20; index++) {
+    record[`Data${String(index).padStart(2, "0")}`] = `DATA-DUMMY-${paddedNumber}-${String(index).padStart(2, "0")}`;
+  }
+
+  return Object.entries(record).map(([field, value]) => `<${field}>${value}</${field}>`).join("\r\n");
+};
+
+const pc1 = (id, project, name, fileName, recordNumber, date, ticket, version = "1.0") => {
+  const content = pc1RecordExample(recordNumber);
+  return {
+    id,
+    project,
+    name,
+    category: "PC1",
+    carrier: "Compartido",
+    status: "Approved",
+    owner: "Equipo de configuración",
+    lastUpdated: date,
+    validation: "Ejemplo",
+    scope: name,
+    description: "Ejemplo PC1 de texto plano con campos delimitados por etiquetas, siguiendo la estructura de los registros dummy.",
+    sourceLabel: `Ejemplo ilustrativo (${fileName})`,
+    example: { name: fileName, format: "Texto plano", content },
+    versions: demoHistory(ticket, date, "Actualización de estructura del registro PC1.", version, content, id === "PC1-PAY-001" ? {
+      before: content.replace("DUMMY CITY 001", "DUMMY CITY PREVIOUS 001"),
+      proposed: content.replace("DUMMY CARDHOLDER 001", "DUMMY CARDHOLDER PROPOSED 001"),
+      currentChange: "Se actualizó el dato de ciudad manteniendo la estructura de campos PC1.",
+      proposedChange: "Se propone actualizar el nombre de ejemplo del titular."
+    } : {}).map(version => ({
+      ...version,
+      historyFiles: [{
+        label: "Ejemplo PC1",
+        name: fileName,
+        preview: version.snapshot,
+        previewTruncated: false
+      }]
+    }))
+  };
+};
 
 const report = (id, project, name, outputFormat, folder, reportFiles, exampleFiles, date, ticket) => ({
   id,
   project,
   name,
-  category: "Reportes",
+  category: "Reporte",
   reportFormat: outputFormat,
   carrier: "Compartido",
   status: "Approved",
@@ -58,39 +117,62 @@ const report = (id, project, name, outputFormat, folder, reportFiles, exampleFil
   reportFiles,
   exampleFiles,
   sourceLabel: folder,
-  versions: demoHistory(ticket, date, `Actualización de archivos y ejemplo del reporte ${outputFormat}.`)
+  versions: demoHistory(ticket, date, `Actualización de archivos y ejemplo del reporte ${outputFormat}.`, "1.0", exampleFiles.map(file => `${file.label}: ${file.name}${file.preview ? `\n${file.preview}` : ""}`).join("\n\n"), id === "RPT-P2-001" ? {
+    before: exampleFiles[0].preview.replace(/APPROVED/g, "ACCEPTED").replace(/REJECTED/g, "DECLINED"),
+    proposed: exampleFiles[0].preview.replace("APPROVED", "VALIDATED"),
+    currentChange: "Se normalizaron los estados ACCEPTED y DECLINED a APPROVED y REJECTED.",
+    proposedChange: "Se propone mostrar VALIDATED para los registros aprobados."
+  } : {}).map(version => ({
+    ...version,
+    historyFiles: [...reportFiles, ...exampleFiles]
+  }))
 });
 
-const carrierPackage = (id, project, packageNumber, design, variants, date) => ({
-  id,
-  project,
-  name: `Paquete ${packageNumber}`,
-  category: "Carrier",
-  carrier: `Design ${design}`,
-  packageFile: `Carriers/${project}/Paquete ${packageNumber}/RichPDFPackage/Package_${packageNumber}.pkg3`,
-  status: "Approved",
-  owner: "Integración",
-  lastUpdated: date,
-  validation: "Paquete y ejemplos disponibles",
-  scope: `Design ${design}`,
-  description: "Cada paquete incluye el archivo PKG3 en RichPDFPackage y los PDF de muestra de sus variantes en Example.",
-  sourceLabel: `Carriers/${project}/Paquete ${packageNumber}/`,
-  variants: variants.map(variant => ({
+const carrierPackage = (id, project, packageNumber, design, variants, date) => {
+  const namedVariants = variants.map(variant => ({
     ...variant,
-    file: `Carriers/${project}/Paquete ${packageNumber}/Example/${variant.fileName}`
-  })),
-  versions: demoHistory(`DEMO-${id}`, date, `Actualización de variantes del paquete ${packageNumber}.`)
-});
+    name: `PC1 - ${variant.name.replace(/^Variante \d+ · /, "")}`
+  }));
+
+  return {
+    id,
+    project,
+    name: `Paquete ${packageNumber}`,
+    category: "Carrier",
+    carrier: `Design ${design}`,
+    packageFile: `Carriers/${project}/Paquete ${packageNumber}/RichPDFPackage/Package_${packageNumber}.pkg3`,
+    status: "Approved",
+    owner: "Integración",
+    lastUpdated: date,
+    validation: "Paquete y ejemplos disponibles",
+    scope: `Design ${design}`,
+    description: "Cada paquete incluye el archivo PKG3 en RichPDFPackage y los PDF de muestra de sus variantes en Example.",
+    sourceLabel: `Carriers/${project}/Paquete ${packageNumber}/`,
+    variants: namedVariants.map(variant => ({
+      ...variant,
+      file: `Carriers/${project}/Paquete ${packageNumber}/Example/${variant.fileName}`
+    })),
+    versions: demoHistory(`DEMO-${id}`, date, `Actualización de variantes del paquete ${packageNumber}.`, "1.0", namedVariants.map(variant => `${variant.name}\nArchivo: ${variant.fileName}`).join("\n\n")).map(version => ({
+      ...version,
+      historyFiles: randomSample(namedVariants).map(variant => ({
+        label: variant.name,
+        name: variant.fileName,
+        path: `Carriers/${project}/Paquete ${packageNumber}/Example/${variant.fileName}`,
+        sizeBytes: variant.sizeBytes
+      }))
+    }))
+  };
+};
 
 const CATALOG = [
-  pc1("PC1-PAY-001", "Proyecto 1", "PC1 de pagos", "PC1-Pagos.txt",
-    "PC1_ID=PC1-PAY-001\r\nVERSION=1.0\r\nPROJECT=Proyecto 1\r\n\r\n[MAPPING]\r\nSOURCE=PAYMENT_REFERENCE\r\nTARGET=Payment.Reference\r\nTYPE=STRING\r\nREQUIRED=YES\r\n\r\nSOURCE=SETTLEMENT_DATE\r\nTARGET=Payment.SettlementDate\r\nTYPE=DATE\r\nFORMAT=yyyy-MM-dd",
+  pc1("PC1-PAY-001", "Proyecto 1", "PC1 - Banco 1", "PC1 - Banco 1",
+    1,
     "2026-10-01", "DEMO-101"),
-  pc1("PC1-SET-002", "Proyecto 1", "PC1 de liquidación", "PC1-Liquidacion.txt",
-    "PC1_ID=PC1-SET-002\r\nVERSION=1.1\r\nPROJECT=Proyecto 1\r\n\r\n[MAPPING]\r\nSOURCE=SETTLEMENT_ID\r\nTARGET=Settlement.Id\r\nTYPE=STRING\r\nREQUIRED=YES\r\n\r\nSOURCE=NET_AMOUNT\r\nTARGET=Settlement.NetAmount\r\nTYPE=DECIMAL\r\nCURRENCY=USD",
-    "2026-10-02", "DEMO-102"),
-  pc1("PC1-CLI-001", "Proyecto 2", "PC1 de clientes", "PC1-Clientes.txt",
-    "PC1_ID=PC1-CLI-001\r\nVERSION=1.0\r\nPROJECT=Proyecto 2\r\n\r\n[MAPPING]\r\nSOURCE=CUSTOMER_NUMBER\r\nTARGET=Customer.Number\r\nTYPE=STRING\r\nREQUIRED=YES\r\n\r\nSOURCE=BIRTH_DATE\r\nTARGET=Customer.BirthDate\r\nTYPE=DATE\r\nFORMAT=yyyy-MM-dd",
+  pc1("PC1-SET-002", "Proyecto 1", "PC1 - Banco 2", "PC1 - Banco 2",
+    2,
+    "2026-10-02", "DEMO-102", "1.1"),
+  pc1("PC1-CLI-001", "Proyecto 2", "PC1 - Banco 3", "PC1 - Banco 3",
+    3,
     "2026-10-08", "DEMO-201"),
 
   report("RPT-P1-001", "Proyecto 1", "Reporte mensual de producción", "PDF",

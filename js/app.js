@@ -1,6 +1,7 @@
 const categories = [...new Set(CATALOG.map(c => c.category))];
 const projects = [...new Set(CATALOG.map(c => c.project))];
 const $ = id => document.getElementById(id);
+let selectedCategory = "PC1";
 const escapeHtml = s => String(s ?? "").replace(/[&<>"']/g, c => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]));
 const statusClass = s => ({ 'Approved': 'approved', 'In Review': 'review', 'Draft': 'draft', 'Deprecated': 'deprecated', 'Pending verification': 'pending' }[s] || 'draft');
 const pill = s => `<span class="pill ${statusClass(s)}">${escapeHtml(s)}</span>`;
@@ -9,44 +10,73 @@ const latestRecorded = c => [...c.versions].sort((a, b) => b.recordedDate.locale
 const dateLabel = d => d ? new Date(d + "T12:00:00").toLocaleDateString("en-GB", { day: "2-digit", month: "short", year: "numeric" }) : "Not recorded";
 function init() {
   projects.forEach(project => $('projectFilter').insertAdjacentHTML('beforeend', `<option>${escapeHtml(project)}</option>`));
-  categories.forEach(c => $('categoryFilter').insertAdjacentHTML('beforeend', `<option>${escapeHtml(c)}</option>`));
-  renderProjects(); renderCategories(); renderRows();
-  $('searchInput').addEventListener('input', renderRows);
-  $('projectFilter').addEventListener('change', () => { renderProjects(); renderRows() });
-  $('categoryFilter').addEventListener('change', () => { renderCategories(); renderRows() });
-  $('statusFilter').addEventListener('change', renderRows);
-  $('resetBtn').addEventListener('click', () => { $('searchInput').value = ''; $('projectFilter').value = ''; $('categoryFilter').value = ''; $('statusFilter').value = ''; renderProjects(); renderCategories(); renderRows() });
+  renderCategories(); renderRows();
+  $('projectFilter').addEventListener('change', () => { selectedCategory = 'PC1'; renderCategories(); renderRows() });
   $('backBtn').addEventListener('click', showHome);
+  document.querySelectorAll('[data-detail-tab]').forEach(button => button.addEventListener('click', () => setDetailTab(button.dataset.detailTab)));
 }
-function renderProjects() {
-  const selected = $('projectFilter').value;
-  $('projectCards').innerHTML = `<button class="category ${!selected ? 'active' : ''}" data-project=""><strong>Todos los proyectos</strong><span>${CATALOG.length} elementos</span></button>` + projects.map(project => `<button class="category ${selected === project ? 'active' : ''}" data-project="${escapeHtml(project)}"><strong>${escapeHtml(project)}</strong><span>${CATALOG.filter(c => c.project === project).length} elementos</span></button>`).join('');
-  document.querySelectorAll('[data-project]').forEach(b => b.addEventListener('click', () => { $('projectFilter').value = b.dataset.project; renderProjects(); renderRows() }));
+function setDetailTab(activePane) {
+  document.querySelectorAll('.detail-pane').forEach(pane => pane.classList.toggle('active', pane.id === activePane));
+  document.querySelectorAll('[data-detail-tab]').forEach(button => {
+    const isActive = button.dataset.detailTab === activePane;
+    button.classList.toggle('active', isActive);
+    button.setAttribute('aria-selected', String(isActive));
+  });
+}
+function renderComparedLines(content, comparison, changeClass) {
+  const lines = content.split(/\r?\n/);
+  const comparisonLines = comparison.split(/\r?\n/);
+  return lines.map((line, index) => `<span class="diff-line ${line === comparisonLines[index] ? '' : changeClass}">${escapeHtml(line) || ' '}</span>`).join('');
+}
+function renderHistoryFiles(files) {
+  if (!files?.length) return `<p class="small muted">No hay archivos de ejemplo asociados a esta versión.</p>`;
+  return `<details class="history-files">
+    <summary>Mostrar previsualización de archivos (${files.length})</summary>
+    <div class="variant-grid">${files.map(file => {
+    const extension = file.name.split(".").pop().toLowerCase();
+    const isEmpty = file.sizeBytes === 0;
+    const fileLink = file.path ? `<a class="link" href="${escapeHtml(encodeURI(file.path))}" target="_blank" rel="noopener">Abrir ${escapeHtml(file.name)} ↗</a>` : "";
+    const preview = isEmpty
+      ? `<div class="missing-file">No hay contenido para previsualizar.</div>`
+      : extension === "pdf" && file.path
+        ? `<iframe src="${escapeHtml(encodeURI(file.path))}" title="Previsualización de ${escapeHtml(file.name)}" loading="lazy"></iframe>`
+        : file.preview
+          ? `<pre class="sample history-file-sample">${escapeHtml(file.preview)}${file.previewTruncated ? "\n\n… Vista parcial." : ""}</pre>`
+          : `<div class="small muted">No hay una vista previa disponible para este archivo.</div>`;
+    return `<article class="example-card history-file-card">
+        <div class="example-heading"><strong>${escapeHtml(file.label || file.name)}</strong><span class="small muted">${escapeHtml(extension.toUpperCase())}</span></div>
+        ${fileLink}
+        ${preview}
+      </article>`;
+  }).join("")}</div>
+  </details>`;
 }
 function renderCategories() {
-  const selected = $('categoryFilter').value;
-  $('categoryCards').innerHTML = `<button class="category ${!selected ? 'active' : ''}" data-cat=""><strong>Todos los grupos</strong><span>${CATALOG.length} elementos</span></button>` + categories.map(cat => `<button class="category ${selected === cat ? 'active' : ''}" data-cat="${escapeHtml(cat)}"><strong>${escapeHtml(cat)}</strong><span>${CATALOG.filter(c => c.category === cat).length} elementos</span></button>`).join('');
-  document.querySelectorAll('[data-cat]').forEach(b => b.addEventListener('click', () => { $('categoryFilter').value = b.dataset.cat; renderCategories(); renderRows() }));
+  const selected = selectedCategory;
+  const hasProject = Boolean($('projectFilter').value);
+  $('categoryPrompt').hidden = hasProject;
+  $('categoryCards').innerHTML = categories.map(cat => `<button class="category ${selected === cat ? 'active' : ''}" data-cat="${escapeHtml(cat)}" ${hasProject ? "" : "disabled"}><strong>${escapeHtml(cat)}</strong></button>`).join('');
+  document.querySelectorAll('[data-cat]').forEach(b => b.addEventListener('click', () => { selectedCategory = selectedCategory === b.dataset.cat ? '' : b.dataset.cat; renderCategories(); renderRows() }));
 }
 function renderRows() {
-  const q = $('searchInput').value.toLowerCase().trim(), project = $('projectFilter').value, cat = $('categoryFilter').value, status = $('statusFilter').value;
-  const categoryOrder = ["PC1", "Reportes", "Carrier"];
+  const project = $('projectFilter').value, cat = selectedCategory;
+  const hasProject = Boolean(project);
+  $('projectElementsView').hidden = !hasProject;
+  $('projectSelectionPrompt').hidden = hasProject;
+  const categoryOrder = ["PC1", "Reporte", "Carrier"];
   const list = CATALOG.filter(c => {
-    const reportFiles = (c.reportFiles || []).flatMap(file => [file.label, file.name]);
-    const exampleFiles = (c.exampleFiles || []).map(file => file.name);
-    const searchable = [c.id, c.name, c.project, c.category, c.reportFormat, c.reportFolder, c.carrier, c.owner, c.status, c.packageFile, ...reportFiles, ...exampleFiles, ...c.versions.map(v => v.ticket), ...(c.example ? [c.example.name, c.example.format, c.example.content, c.layout] : []), ...(c.variants || []).flatMap(v => [v.name, v.fileName])];
-    return (!project || c.project === project) && (!cat || c.category === cat) && (!status || c.status === status) && (!q || searchable.join(' ').toLowerCase().includes(q));
+    return hasProject && c.project === project && (!cat || c.category === cat);
   })
     .sort((a, b) => projects.indexOf(a.project) - projects.indexOf(b.project) || categoryOrder.indexOf(a.category) - categoryOrder.indexOf(b.category) || a.name.localeCompare(b.name));
   let lastGroup = "";
   $('componentRows').innerHTML = list.map(c => {
     const group = `${c.project} · ${c.category}`;
-    const heading = group === lastGroup ? "" : `<tr class="group-row"><th colspan="7">${escapeHtml(group)}</th></tr>`;
+    const heading = group === lastGroup ? "" : `<tr class="group-row"><th colspan="5">${escapeHtml(group)}</th></tr>`;
     lastGroup = group;
     const subline = [c.id, c.reportFormat, c.category === "Carrier" ? `Design ${c.scope.split(" ").pop()}` : ""].filter(Boolean).join(" · ");
     return `${heading}<tr>
  <td><a href="#" class="component-name" data-open="${escapeHtml(c.id)}">${escapeHtml(c.name)}</a><div class="subline">${escapeHtml(subline)}</div></td>
- <td>${escapeHtml(c.project)}</td><td>${escapeHtml(c.category)}</td><td><strong>${escapeHtml(approvedVersion(c))}</strong></td><td>${escapeHtml(latestRecorded(c))}</td><td>${pill(c.status)}</td>
+ <td>${escapeHtml(c.project)}</td><td>${escapeHtml(c.category)}</td><td><strong>${escapeHtml(latestRecorded(c))}</strong></td>
  <td><button class="btn small" data-open="${escapeHtml(c.id)}">Ver</button></td></tr>`;
   }).join('');
   $('emptyState').hidden = list.length !== 0;
@@ -69,8 +99,7 @@ function renderExamples(c) {
         ? `<span class="report-file-name">${escapeHtml(file.name)}</span><span class="missing-file">Archivo vacío (0 bytes)</span>`
         : `<div><a class="link report-file-name" href="${escapeHtml(encodeURI(file.path))}" target="_blank" rel="noopener">${escapeHtml(file.name)} ↗</a>${renderFilePreview(file)}</div><span class="small muted">${file.sizeBytes.toLocaleString("es-MX")} bytes</span>`}
     </li>`).join('')}</ul>`;
-    return `<div class="report-folder"><strong>Carpeta del reporte</strong><code>${escapeHtml(c.reportFolder)}/</code></div>
-      <div class="report-file-group"><h3>Archivos del reporte</h3>${renderFiles(c.reportFiles)}</div>
+    return `<div class="report-file-group"><h3>Archivos del reporte</h3>${renderFiles(c.reportFiles)}</div>
       <div class="report-file-group"><h3>Example</h3><code>${escapeHtml(c.reportFolder)}/Example/</code>${renderFiles(c.exampleFiles)}</div>
       ${c.reportFiles.some(file => file.path.endsWith(".sql")) ? "" : `<p class="small muted">No se encontró un archivo .sql separado en esta carpeta.</p>`}`;
   }
@@ -102,34 +131,38 @@ function renderFilePreview(file) {
 function showHome() { $('home').style.display = ''; $('detailView').classList.remove('active'); window.scrollTo({ top: 0, behavior: 'smooth' }) }
 function showDetail(id) {
   const c = CATALOG.find(x => x.id === id); if (!c) return;
+  setDetailTab('componentDetailPane');
   $('home').style.display = 'none'; $('detailView').classList.add('active');
   $('detailCategory').textContent = `${c.project} · ${c.category}${c.reportFormat ? ` · ${c.reportFormat}` : ""}`;
   $('detailName').textContent = c.name;
   $('detailSubtitle').textContent = [c.id, c.carrier].filter(Boolean).join(' · ');
-  $('detailStatus').innerHTML = pill(c.status);
   $('detailId').textContent = c.id;
   const newest = latestRecorded(c), approved = approvedVersion(c);
   $('detailGrid').innerHTML = [
     ['Proyecto', c.project],
-    ...(c.reportFolder ? [['Carpeta del reporte', c.reportFolder]] : []),
     ...(c.packageFile ? [['Archivo PKG3', c.packageFile.split("/").pop()]] : []),
     ...(c.reportFormat ? [['Formato', c.reportFormat]] : []),
-    ['Última versión aprobada', approved],
     ['Última versión registrada', newest],
     ['Última actualización', dateLabel(c.lastUpdated)],
-    ['Responsable', c.owner || 'Sin asignar'],
-    ['Validación', c.validation],
-    ['Alcance', c.scope || 'No especificado']
   ].map(([a, b]) => `<div class="detail-cell"><div class="label">${escapeHtml(a)}</div><strong>${escapeHtml(b)}</strong></div>`).join('');
   $('detailDescription').textContent = c.description;
   $('detailExamples').innerHTML = renderExamples(c);
   $('detailLinks').innerHTML = c.ticketUrl ? `<a class="btn" href="${escapeHtml(c.ticketUrl)}" target="_blank" rel="noopener">Abrir ticket ↗</a>` : "";
-  $('detailSource').textContent = c.sourceLabel;
-  $('historyCount').textContent = `${c.versions.length} versión(es)`;
-  $('historyList').innerHTML = [...c.versions].sort((a, b) => b.recordedDate.localeCompare(a.recordedDate)).map(v => `<div class="history-item">
+  $('historyCount').textContent = `(${c.versions.length})`;
+  $('historyList').innerHTML = [...c.versions].sort((a, b) => b.recordedDate.localeCompare(a.recordedDate)).map(v => `<article class="history-item">
  <div><div class="history-version">${escapeHtml(v.version)}</div><div class="history-date">${dateLabel(v.recordedDate)}</div></div>
- <div><div class="tagline">${pill(v.status)} ${v.version === approved ? '<span class="pill approved">Aprobada actual</span>' : ''} ${v.version === newest ? '<span class="pill draft">Última registrada</span>' : ''}</div>
- <div class="history-desc">${escapeHtml(v.change)}</div><div class="small muted">Ticket: <a class="link" href="${escapeHtml(v.ticketUrl || '#')}" target="_blank" rel="noopener">${escapeHtml(v.ticket)}</a> · Actualizado por ${escapeHtml(v.author)}</div>${v.notes ? `<div class="small muted">${escapeHtml(v.notes)}</div>` : ''}</div></div>`).join('');
+ <div class="history-content">
+ <div class="history-ticket"><span class="history-ticket-label">Ticket: </span><a class="history-ticket-link" href="${escapeHtml(v.ticketUrl || '#')}" target="_blank" rel="noopener">${escapeHtml(v.ticket)} ↗</a></div>
+ <div class="history-desc"><strong>Cambio:</strong> ${escapeHtml(v.change)}</div>
+ <article class="history-snapshot">
+   <div class="example-heading"><strong>${escapeHtml(c.name)} · Ejemplo de versión ${escapeHtml(v.version)}</strong><span class="small muted">${escapeHtml(c.category)}</span></div>
+   ${v.previewAfter ? `<div class="change-preview">
+     ${v.previewBefore ? `<div class="change-side before"><div class="change-label">Antes</div><pre class="sample">${renderComparedLines(v.previewBefore, v.previewAfter, 'removed')}</pre></div>` : ''}
+     <div class="change-side after"><div class="change-label">${v.previewBefore ? 'Después' : 'Muestra de esta versión'}</div><pre class="sample">${v.previewBefore ? renderComparedLines(v.previewAfter, v.previewBefore, 'added') : escapeHtml(v.previewAfter)}</pre></div>
+   </div><div class="demo-label">Previsualización de cambio simulada</div>` : ''}
+   ${renderHistoryFiles(v.historyFiles)}
+ </article>
+ <div class="small muted"></div>${v.notes ? `<div class="small muted">${escapeHtml(v.notes)}</div>` : ''}</div></article>`).join('');
   window.scrollTo({ top: 0, behavior: 'smooth' });
 }
 init();
