@@ -776,31 +776,59 @@ tbody tr:last-child td {
     margin-top: 10px
 }
 
-.history-files summary {
-    width: fit-content;
-    margin-bottom: 9px;
+.history-file-list {
+    display: flex;
+    flex-direction: column;
+    gap: 7px
+}
+
+.history-file-item {
+    width: 100%;
+    border: 1px solid var(--line);
+    border-radius: 8px;
+    background: #fff;
+    overflow: hidden
+}
+
+.history-file-item > summary {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: 12px;
+    padding: 10px 12px;
     color: var(--blue);
     font-size: 12px;
     font-weight: 700;
-    cursor: pointer
+    cursor: pointer;
+    overflow-wrap: anywhere
 }
 
-.history-files:not([open]) summary {
-    margin-bottom: 0
+.history-file-item > summary span:first-child {
+    min-width: 0
 }
 
-.history-file-card iframe {
+.history-file-item[open] > summary {
+    border-bottom: 1px solid var(--line);
+    background: #f7f9fc
+}
+
+.history-file-content {
+    width: 100%;
+    padding: 12px
+}
+
+.history-file-content iframe {
     display: block;
     width: 100%;
     height: 300px;
-    margin-top: 8px;
     border: 1px solid var(--line);
     border-radius: 7px;
     background: #fff
 }
 
-.history-file-card .link {
-    display: inline-block;
+.history-file-actions {
+    display: flex;
+    justify-content: flex-end;
     margin-bottom: 8px
 }
 
@@ -811,6 +839,17 @@ tbody tr:last-child td {
     border: 1px solid var(--line);
     border-radius: 7px;
     background: #fff
+}
+
+.detail-file-preview {
+    max-height: none;
+    overflow: visible
+}
+
+.detail-file-pdf {
+    height: 75vh;
+    min-height: 600px;
+    max-height: 1000px
 }
 
 .diff-line {

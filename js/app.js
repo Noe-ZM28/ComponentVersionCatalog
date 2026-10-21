@@ -14,6 +14,14 @@ function init() {
   $('projectFilter').addEventListener('change', () => { renderCategories(); renderRows() });
   $('backBtn').addEventListener('click', showHome);
   document.querySelectorAll('[data-detail-tab]').forEach(button => button.addEventListener('click', () => setDetailTab(button.dataset.detailTab)));
+  ['historyList', 'detailExamples'].forEach(containerId => $(containerId).addEventListener('toggle', event => {
+    const openedFile = event.target;
+    if (!openedFile.matches?.('.history-file-item') || !openedFile.open) return;
+
+    $(containerId).querySelectorAll('.history-file-item[open]').forEach(file => {
+      if (file !== openedFile) file.open = false;
+    });
+  }, true));
 }
 function setDetailTab(activePane) {
   document.querySelectorAll('.detail-pane').forEach(pane => pane.classList.toggle('active', pane.id === activePane));
@@ -28,28 +36,36 @@ function renderComparedLines(content, comparison, changeClass) {
   const comparisonLines = comparison.split(/\r?\n/);
   return lines.map((line, index) => `<span class="diff-line ${line === comparisonLines[index] ? '' : changeClass}">${escapeHtml(line) || ' '}</span>`).join('');
 }
-function renderHistoryFiles(files) {
+function renderFileList(files, fullPreview = false) {
   if (!files?.length) return `<p class="small muted">No hay archivos de ejemplo asociados a esta versión.</p>`;
-  return `<details class="history-files">
-    <summary>Mostrar previsualización de archivos (${files.length})</summary>
-    <div class="variant-grid">${files.map(file => {
+  const previewClass = fullPreview ? " detail-file-preview" : "";
+  return `<section class="history-files${fullPreview ? " detail-files" : ""}" aria-label="Archivos de ejemplo">
+    <div class="history-file-list">${files.map(file => {
     const extension = file.name.split(".").pop().toLowerCase();
     const isEmpty = file.sizeBytes === 0;
-    const fileLink = file.path ? `<a class="link" href="${escapeHtml(encodeURI(file.path))}" target="_blank" rel="noopener">Abrir ${escapeHtml(file.name)} ↗</a>` : "";
-    const preview = isEmpty
+    const previewUnavailable = ["rpt", "pkg3", "pgk3"].includes(extension);
+    const fileLink = file.path && !previewUnavailable ? `<div class="history-file-actions"><a class="btn small" href="${escapeHtml(encodeURI(file.path))}" target="_blank" rel="noopener">Abrir archivo en una nueva pestaña</a></div>` : "";
+    const preview = previewUnavailable
+      ? `<div class="small muted">La previsualización de archivos .${escapeHtml(extension)} no está disponible.</div>`
+      : isEmpty
       ? `<div class="missing-file">No hay contenido para previsualizar.</div>`
       : extension === "pdf" && file.path
-        ? `<iframe src="${escapeHtml(encodeURI(file.path))}" title="Previsualización de ${escapeHtml(file.name)}" loading="lazy"></iframe>`
+        ? `<iframe class="${fullPreview ? "detail-file-pdf" : ""}" src="${escapeHtml(encodeURI(file.path))}" title="Previsualización de ${escapeHtml(file.name)}" loading="lazy"></iframe>`
         : file.preview
-          ? `<pre class="sample history-file-sample">${escapeHtml(file.preview)}${file.previewTruncated ? "\n\n… Vista parcial." : ""}</pre>`
+        ? `<pre class="sample history-file-sample${previewClass}">${escapeHtml(file.preview)}${file.previewTruncated ? "\n\n… Vista parcial. Abre el archivo para consultar el contenido completo." : ""}</pre>`
           : `<div class="small muted">No hay una vista previa disponible para este archivo.</div>`;
-    return `<article class="example-card history-file-card">
-        <div class="example-heading"><strong>${escapeHtml(file.label || file.name)}</strong><span class="small muted">${escapeHtml(extension.toUpperCase())}</span></div>
-        ${fileLink}
-        ${preview}
-      </article>`;
+    return `<details class="history-file-item">
+          <summary><span>${escapeHtml(file.label || file.name)}</span><span class="small muted">${escapeHtml(extension.toUpperCase())}</span></summary>
+          <div class="history-file-content">
+          ${fileLink}
+          ${preview}
+          </div>
+        </details>`;
   }).join("")}</div>
-  </details>`;
+  </section>`;
+}
+function renderHistoryFiles(files) {
+  return renderFileList(files);
 }
 function renderCategories() {
   const selected = selectedCategory;
@@ -84,31 +100,18 @@ function renderRows() {
 }
 function renderExamples(c) {
   if (c.variants?.length) {
-    return `<div class="package-file"><strong>RichPDFPackage</strong><a class="link package-download" href="${escapeHtml(encodeURI(c.packageFile))}" target="_blank" rel="noopener">${escapeHtml(c.packageFile.split("/").pop())} ↗</a></div>
-      <div class="report-file-group"><h3>Example</h3><code>${escapeHtml(c.sourceLabel)}Example/</code>
-      <div class="variant-grid">${c.variants.map(v => `<article class="example-card">
-      <div class="example-heading"><strong>${escapeHtml(v.name)}</strong><span class="small muted">PDF</span></div>
-      <a class="link" href="${escapeHtml(encodeURI(v.file))}" target="_blank" rel="noopener">${escapeHtml(v.fileName)} ↗</a>
-      ${renderFilePreview({ name: v.fileName, path: v.file })}
-    </article>`).join('')}</div></div>`;
+    const files = [
+      { label: "RichPDFPackage", name: c.packageFile.split("/").pop(), path: c.packageFile },
+      ...c.variants.map(variant => ({ label: variant.name, name: variant.fileName, path: variant.file }))
+    ];
+    return renderFileList(files, true);
   }
   if (c.reportFiles) {
-    const renderFiles = files => `<ul class="report-file-list">${files.map(file => `<li>
-      <span>${escapeHtml(file.label)}</span>
-      ${file.sizeBytes === 0
-        ? `<span class="report-file-name">${escapeHtml(file.name)}</span><span class="missing-file">Archivo vacío (0 bytes)</span>`
-        : `<div><a class="link report-file-name" href="${escapeHtml(encodeURI(file.path))}" target="_blank" rel="noopener">${escapeHtml(file.name)} ↗</a>${renderFilePreview(file)}</div><span class="small muted">${file.sizeBytes.toLocaleString("es-MX")} bytes</span>`}
-    </li>`).join('')}</ul>`;
-    return `<div class="report-file-group"><h3>Archivos del reporte</h3>${renderFiles(c.reportFiles)}</div>
-      <div class="report-file-group"><h3>Example</h3><code>${escapeHtml(c.reportFolder)}/Example/</code>${renderFiles(c.exampleFiles)}</div>
-      ${c.reportFiles.some(file => file.path.endsWith(".sql")) ? "" : `<p class="small muted">No se encontró un archivo .sql separado en esta carpeta.</p>`}`;
+    return renderFileList([...c.reportFiles, ...c.exampleFiles], true);
   }
   const artifacts = c.rptFile ? `<div class="report-artifacts"><strong>Archivo Crystal Reports (.rpt):</strong> ${escapeHtml(c.rptFile)} <span class="missing-file">Pendiente de agregar</span><br><strong>SP:</strong> ${escapeHtml(c.storedProcedure)} <span class="missing-file">Pendiente de agregar</span></div>` : "";
-  return `${artifacts}<article class="example-card">
-    ${c.layout ? `<div class="report-layout"><strong>Layout</strong><p>${escapeHtml(c.layout)}</p></div>` : ""}
-    <div class="example-heading"><strong>${escapeHtml(c.example.name)}</strong><span class="small muted">${escapeHtml(c.example.format)}</span></div>
-    <pre class="sample">${escapeHtml(c.example.content)}</pre>
-  </article>`;
+  const files = [{ label: c.example.format, name: c.example.name, preview: c.example.content }];
+  return `${artifacts}${c.layout ? `<div class="report-layout"><strong>Layout</strong><p>${escapeHtml(c.layout)}</p></div>` : ""}${renderFileList(files, true)}`;
 }
 function renderFilePreview(file) {
   const extension = file.name.split(".").pop().toLowerCase();
@@ -152,7 +155,7 @@ function showDetail(id) {
   $('historyList').innerHTML = [...c.versions].sort((a, b) => b.recordedDate.localeCompare(a.recordedDate)).map(v => `<article class="history-item">
  <div><div class="history-version">${escapeHtml(v.version)}</div><div class="history-date">${dateLabel(v.recordedDate)}</div></div>
  <div class="history-content">
- <div class="history-ticket"><span class="history-ticket-label">Ticket: </span><a class="history-ticket-link" href="${escapeHtml(v.ticketUrl || '#')}" target="_blank" rel="noopener">${escapeHtml(v.ticket)} ↗</a></div>
+ <div class="history-ticket"><span class="history-ticket-label">Ticket: </span><a class="history-ticket-link" href="${escapeHtml(v.ticketUrl || '#')}" target="_blank" rel="noopener">${escapeHtml(v.ticketType)} - ${escapeHtml(v.ticketName)}</a></div>
  <div class="history-desc"><strong>Cambio:</strong> ${escapeHtml(v.change)}</div>
  <article class="history-snapshot">
    <div class="example-heading"><strong>${escapeHtml(c.name)} · Ejemplo de versión ${escapeHtml(v.version)}</strong><span class="small muted">${escapeHtml(c.category)}</span></div>

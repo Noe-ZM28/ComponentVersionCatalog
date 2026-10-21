@@ -5,6 +5,8 @@ const demoVersion = (version, ticket, recordedDate, change, snapshot, status = "
   ticketStatus: status,
   recordedDate,
   ticket,
+  ticketType: "Tarea",
+  ticketName: change,
   ticketUrl: `https://example.com/jira/${ticket}`,
   author,
   change,
@@ -117,6 +119,7 @@ const pc1 = (id, project, name, fileName, recordNumber, date, ticket, version = 
       proposedChange: "Se propone actualizar el nombre de ejemplo del titular."
     } : {}).map(version => ({
       ...version,
+      ticketType: "PC1",
       historyFiles: [{
         label: "Ejemplo PC1",
         name: fileName,
@@ -151,6 +154,7 @@ const report = (id, project, name, outputFormat, folder, reportFiles, exampleFil
     proposedChange: "Se propone mostrar VALIDATED para los registros aprobados."
   } : {}).map(version => ({
     ...version,
+    ticketType: "Reporte",
     historyFiles: [...reportFiles, ...exampleFiles]
   }))
 });
@@ -158,7 +162,7 @@ const report = (id, project, name, outputFormat, folder, reportFiles, exampleFil
 const carrierPackage = (id, project, packageNumber, design, variants, date) => {
   const namedVariants = variants.map(variant => ({
     ...variant,
-    name: `PC1 - ${variant.name.replace(/^Variante \d+ · /, "")}`
+    name: variant.name.replace(/^Variante \d+ · /, "")
   }));
 
   return {
@@ -181,6 +185,7 @@ const carrierPackage = (id, project, packageNumber, design, variants, date) => {
     })),
     versions: demoHistory(`DEMO-${id}`, date, `Actualización de variantes del paquete ${packageNumber}.`, "1.0", namedVariants.map(variant => `${variant.name}\nArchivo: ${variant.fileName}`).join("\n\n")).map(version => ({
       ...version,
+      ticketType: "Carrier",
       historyFiles: randomSample(namedVariants).map(variant => ({
         label: variant.name,
         name: variant.fileName,
