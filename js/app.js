@@ -93,7 +93,7 @@ function renderRows() {
     return `${heading}<tr>
  <td><a href="#" class="component-name" data-open="${escapeHtml(c.id)}">${escapeHtml(c.name)}</a><div class="subline">${escapeHtml(subline)}</div></td>
  <td>${escapeHtml(c.project)}</td><td>${escapeHtml(c.category)}</td><td><strong>${escapeHtml(latestRecorded(c))}</strong></td>
- <td><button class="btn small" data-open="${escapeHtml(c.id)}">Ver</button></td></tr>`;
+ <td><button class="btn view-button" data-open="${escapeHtml(c.id)}">Ver</button></td></tr>`;
   }).join('');
   $('emptyState').hidden = list.length !== 0;
   document.querySelectorAll('[data-open]').forEach(b => b.addEventListener('click', e => { e.preventDefault(); showDetail(b.dataset.open) }));

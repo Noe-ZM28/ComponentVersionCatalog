@@ -333,18 +333,18 @@ tbody tr:last-child td {
 }
 
 .btn {
-    border: 1px solid var(--line);
-    background: white;
-    color: var(--text);
+    border: 1px solid var(--blue);
+    background: var(--blue);
+    color: #fff;
     border-radius: 8px;
     padding: 8px 11px;
     font-weight: 650
 }
 
 .btn.primary {
-    background: var(--blue);
-    border-color: var(--blue);
-    color: white
+    background: var(--navy);
+    border-color: var(--navy);
+    color: #fff
 }
 
 .btn.small {
@@ -352,8 +352,26 @@ tbody tr:last-child td {
     font-size: 12px
 }
 
+.btn.view-button {
+    padding: 9px 16px;
+    font-size: 14px
+}
+
 .btn:hover {
-    filter: brightness(.97)
+    background: #193f7a;
+    border-color: #193f7a
+}
+
+.btn.primary:hover {
+    background: #0f1e36;
+    border-color: #0f1e36
+}
+
+.btn:focus-visible,
+.category:focus-visible,
+.detail-tab:focus-visible {
+    outline: 3px solid #f0a202;
+    outline-offset: 2px
 }
 
 .section-head {
@@ -414,17 +432,18 @@ tbody tr:last-child td {
 .category {
     flex: 1 1 calc(25% - 9px);
     max-width: calc(25% - 7px);
-    border: 1px solid var(--line);
+    border: 1px solid #8591a3;
     border-radius: 9px;
     padding: 11px;
     background: #fff;
+    color: var(--text);
     text-align: center
 }
 
 .category:disabled {
     background: #f0f2f5;
-    border-color: #e1e4e9;
-    color: #969eaa;
+    border-color: #aab2bf;
+    color: #596273;
     cursor: not-allowed
 }
 
@@ -439,8 +458,9 @@ tbody tr:last-child td {
 }
 
 .category.active {
-    border-color: #8aa9e8;
-    background: var(--blue-soft)
+    border-color: var(--blue);
+    background: var(--blue);
+    color: #fff
 }
 
 .category:disabled.active {
@@ -456,6 +476,10 @@ tbody tr:last-child td {
 .category span {
     color: var(--muted);
     font-size: 11px
+}
+
+.category.active span {
+    color: #fff
 }
 
 .detail {
@@ -484,7 +508,8 @@ tbody tr:last-child td {
 
 .detail-tab.active {
     border-bottom-color: var(--blue);
-    color: var(--blue)
+    background: var(--blue-soft);
+    color: #173f7a
 }
 
 .detail-pane {
