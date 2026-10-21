@@ -9,6 +9,7 @@ const approvedVersion = c => c.versions.find(v => v.status === "Approved")?.vers
 const latestRecorded = c => [...c.versions].sort((a, b) => b.recordedDate.localeCompare(a.recordedDate))[0]?.version || "—";
 const dateLabel = d => d ? new Date(d + "T12:00:00").toLocaleDateString("en-GB", { day: "2-digit", month: "short", year: "numeric" }) : "Not recorded";
 function init() {
+  initTheme();
   projects.forEach(project => $('projectFilter').insertAdjacentHTML('beforeend', `<option>${escapeHtml(project)}</option>`));
   renderCategories(); renderRows();
   $('projectFilter').addEventListener('change', () => { renderCategories(); renderRows() });
@@ -23,6 +24,22 @@ function init() {
     });
   }, true));
 }
+function initTheme() {
+  const savedTheme = localStorage.getItem('catalog-theme');
+  const prefersDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
+  setTheme(savedTheme || (prefersDark ? 'dark' : 'light'));
+  $('themeToggle').addEventListener('click', () => {
+    const nextTheme = document.documentElement.dataset.theme === 'dark' ? 'light' : 'dark';
+    localStorage.setItem('catalog-theme', nextTheme);
+    setTheme(nextTheme);
+  });
+}
+function setTheme(theme) {
+  document.documentElement.dataset.theme = theme;
+  const isDark = theme === 'dark';
+  $('themeToggle').textContent = isDark ? 'Modo claro' : 'Modo nocturno';
+  $('themeToggle').setAttribute('aria-pressed', String(isDark));
+}
 function setDetailTab(activePane) {
   document.querySelectorAll('.detail-pane').forEach(pane => pane.classList.toggle('active', pane.id === activePane));
   document.querySelectorAll('[data-detail-tab]').forEach(button => {
@@ -31,10 +48,41 @@ function setDetailTab(activePane) {
     button.setAttribute('aria-selected', String(isActive));
   });
 }
-function renderComparedLines(content, comparison, changeClass) {
+function renderComparedLines(content, comparison, changeClass, extension = "") {
   const lines = content.split(/\r?\n/);
   const comparisonLines = comparison.split(/\r?\n/);
-  return lines.map((line, index) => `<span class="diff-line ${line === comparisonLines[index] ? '' : changeClass}">${escapeHtml(line) || ' '}</span>`).join('');
+  return lines.map((line, index) => `<span class="diff-line ${line === comparisonLines[index] ? '' : changeClass}">${highlightText(line, extension) || ' '}</span>`).join('');
+}
+function highlightText(text, extension) {
+  const codeExtensions = new Set(["cs", "sql", "js", "ts", "html", "htm", "xml", "json", "py", "java", "c", "cpp", "h", "sh", "bash", "yml", "yaml"]);
+  const isCode = codeExtensions.has(extension);
+  const tokens = /(<!--[\s\S]*?-->|<\/?[A-Za-z][\w:.-]*(?:\s+[^<>]*?)?\/?>|\/\*[\s\S]*?\*\/|--[^\r\n]*|\/\/[^\r\n]*|#[^\r\n]*|@"(?:""|[^"])*"|"(?:\\.|[^"\\])*"|'(?:\\.|[^'\\])*'|\b(?:SELECT|FROM|WHERE|JOIN|ON|AS|AND|OR|NOT|NULL|INSERT|INTO|VALUES|UPDATE|SET|DELETE|CREATE|ALTER|PROCEDURE|BEGIN|END|IF|ELSE|RETURN|DECLARE|WITH|NOCOUNT|using|namespace|class|public|private|protected|static|void|string|int|bool|var|new|return|async|await|const|let|function|true|false|null|def|import|from|for|while|try|catch|finally|throw|extends|implements|interface|package|echo|export|default)\b|\b\d+(?:\.\d+)?\b)/gi;
+  let result = "";
+  let cursor = 0;
+  for (const match of text.matchAll(tokens)) {
+    const token = match[0];
+    result += escapeHtml(text.slice(cursor, match.index));
+    let highlighted = escapeHtml(token);
+    if (/^<!--/.test(token) || (isCode && /^(?:\/\*|--|\/\/|#)/.test(token))) {
+      highlighted = `<span class="syntax-comment">${highlighted}</span>`;
+    } else if (/^<\/?[A-Za-z]/.test(token)) {
+      const tag = token.match(/^(<\/?)([A-Za-z][\w:.-]*)([\s\S]*?)(\/?>)$/);
+      if (tag) {
+        const attributes = tag[3].replace(/([A-Za-z_:][\w:.-]*)(\s*=\s*)("(?:[^"]*)"|'(?:[^']*)')/g,
+          (_, name, equals, value) => `<span class="syntax-attribute">${escapeHtml(name)}</span>${escapeHtml(equals)}<span class="syntax-string">${escapeHtml(value)}</span>`);
+        highlighted = `${escapeHtml(tag[1])}<span class="syntax-tag">${escapeHtml(tag[2])}</span>${attributes}${escapeHtml(tag[4])}`;
+      }
+    } else if (isCode && /^["'@]/.test(token)) {
+      highlighted = `<span class="syntax-string">${highlighted}</span>`;
+    } else if (isCode && /^\d/.test(token)) {
+      highlighted = `<span class="syntax-number">${highlighted}</span>`;
+    } else if (isCode && /^(?:SELECT|FROM|WHERE|JOIN|ON|AS|AND|OR|NOT|NULL|INSERT|INTO|VALUES|UPDATE|SET|DELETE|CREATE|ALTER|PROCEDURE|BEGIN|END|IF|ELSE|RETURN|DECLARE|WITH|NOCOUNT|using|namespace|class|public|private|protected|static|void|string|int|bool|var|new|async|await|const|let|function|true|false|null|def|import|for|while|try|catch|finally|throw|extends|implements|interface|package|echo|export|default)$/i.test(token)) {
+      highlighted = `<span class="syntax-keyword">${highlighted}</span>`;
+    }
+    result += highlighted;
+    cursor = match.index + token.length;
+  }
+  return result + escapeHtml(text.slice(cursor));
 }
 function renderFileList(files, fullPreview = false) {
   if (!files?.length) return `<p class="small muted">No hay archivos de ejemplo asociados a esta versión.</p>`;
@@ -52,7 +100,7 @@ function renderFileList(files, fullPreview = false) {
       : extension === "pdf" && file.path
         ? `<iframe class="${fullPreview ? "detail-file-pdf" : ""}" src="${escapeHtml(encodeURI(file.path))}" title="Previsualización de ${escapeHtml(file.name)}" loading="lazy"></iframe>`
         : file.preview
-        ? `<pre class="sample history-file-sample${previewClass}">${escapeHtml(file.preview)}${file.previewTruncated ? "\n\n… Vista parcial. Abre el archivo para consultar el contenido completo." : ""}</pre>`
+        ? `<pre class="sample history-file-sample${previewClass}">${highlightText(file.preview, extension)}${file.previewTruncated ? "\n\n… Vista parcial. Abre el archivo para consultar el contenido completo." : ""}</pre>`
           : `<div class="small muted">No hay una vista previa disponible para este archivo.</div>`;
     return `<details class="history-file-item">
           <summary><span>${escapeHtml(file.label || file.name)}</span><span class="small muted">${escapeHtml(extension.toUpperCase())}</span></summary>
@@ -72,7 +120,12 @@ function renderCategories() {
   const hasProject = Boolean($('projectFilter').value);
   $('categoryPrompt').hidden = hasProject;
   $('categoryCards').innerHTML = categories.map(cat => `<button class="category ${selected === cat ? 'active' : ''}" data-cat="${escapeHtml(cat)}" ${hasProject ? "" : "disabled"}><strong>${escapeHtml(cat)}</strong></button>`).join('');
-  document.querySelectorAll('[data-cat]').forEach(b => b.addEventListener('click', () => { selectedCategory = selectedCategory === b.dataset.cat ? '' : b.dataset.cat; renderCategories(); renderRows() }));
+  document.querySelectorAll('[data-cat]').forEach(b => b.addEventListener('click', () => {
+    if (selectedCategory === b.dataset.cat) return;
+    selectedCategory = b.dataset.cat;
+    renderCategories();
+    renderRows();
+  }));
 }
 function renderRows() {
   const project = $('projectFilter').value, cat = selectedCategory;
@@ -160,8 +213,8 @@ function showDetail(id) {
  <article class="history-snapshot">
    <div class="example-heading"><strong>${escapeHtml(c.name)} · Ejemplo de versión ${escapeHtml(v.version)}</strong><span class="small muted">${escapeHtml(c.category)}</span></div>
    ${v.previewAfter ? `<div class="change-preview">
-     ${v.previewBefore ? `<div class="change-side before"><div class="change-label">Antes</div><pre class="sample">${renderComparedLines(v.previewBefore, v.previewAfter, 'removed')}</pre></div>` : ''}
-     <div class="change-side after"><div class="change-label">${v.previewBefore ? 'Después' : 'Muestra de esta versión'}</div><pre class="sample">${v.previewBefore ? renderComparedLines(v.previewAfter, v.previewBefore, 'added') : escapeHtml(v.previewAfter)}</pre></div>
+     ${v.previewBefore ? `<div class="change-side before"><div class="change-label">Antes</div><pre class="sample">${renderComparedLines(v.previewBefore, v.previewAfter, 'removed', c.category === "Reporte" ? "cs" : "")}</pre></div>` : ''}
+     <div class="change-side after"><div class="change-label">${v.previewBefore ? 'Después' : 'Muestra de esta versión'}</div><pre class="sample">${v.previewBefore ? renderComparedLines(v.previewAfter, v.previewBefore, 'added', c.category === "Reporte" ? "cs" : "") : highlightText(v.previewAfter, c.category === "Reporte" ? "cs" : "")}</pre></div>
    </div><div class="demo-label">Previsualización de cambio simulada</div>` : ''}
    ${renderHistoryFiles(v.historyFiles)}
  </article>

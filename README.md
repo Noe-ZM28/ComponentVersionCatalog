@@ -9,6 +9,7 @@ A static, browser-based prototype for consulting project PC1 configurations, rep
 1. Keep the `css` and `js` folders next to `index.html`.
 2. Open `index.html` in a modern browser.
 3. Filter by project or category, open an item, and switch between its detail and history views.
+4. Use the header button to switch between light and dark mode. The selected mode is saved in the browser; when no preference is saved, the system color preference is used.
 
 No build tools, external libraries, server, or database are required for this prototype.
 
