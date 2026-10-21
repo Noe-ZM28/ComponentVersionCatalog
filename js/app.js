@@ -11,7 +11,7 @@ const dateLabel = d => d ? new Date(d + "T12:00:00").toLocaleDateString("en-GB",
 function init() {
   projects.forEach(project => $('projectFilter').insertAdjacentHTML('beforeend', `<option>${escapeHtml(project)}</option>`));
   renderCategories(); renderRows();
-  $('projectFilter').addEventListener('change', () => { selectedCategory = 'PC1'; renderCategories(); renderRows() });
+  $('projectFilter').addEventListener('change', () => { renderCategories(); renderRows() });
   $('backBtn').addEventListener('click', showHome);
   document.querySelectorAll('[data-detail-tab]').forEach(button => button.addEventListener('click', () => setDetailTab(button.dataset.detailTab)));
 }

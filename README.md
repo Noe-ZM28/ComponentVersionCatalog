@@ -26,7 +26,7 @@ PC1 examples use the tagged-record layout shown in `dummy_card_records_50.txt` (
 - PDF files can be previewed inline in the browser; text, SQL, C# and RCP files show an excerpt alongside their links.
 - `.rpt` and `.pkg3` package files are intentionally excluded from previews.
 
-Change histories include fictitious examples of a proposed revision in review, the current approved version, and a prior deprecated version. Every history entry includes previews of its associated example files: text samples are shown inline and PDFs are embedded. Selected PC1 and production-report entries also show before/after previews derived from the supplied examples. These previews may use current catalog examples rather than versioned historical snapshots; they are demonstrations, not verified historical records, and the original files are not overwritten. Replace the demo tickets, dates, authors, descriptions, and snapshots with verified history before operational use.
+Change histories include fictitious examples of a proposed revision in review, the current approved version, and a different number of prior deprecated versions per catalog item. Every history entry includes previews of its associated example files: text samples are shown inline and PDFs are embedded. Selected PC1 and production-report entries also show before/after previews derived from the supplied examples. These previews may use current catalog examples rather than versioned historical snapshots; they are demonstrations, not verified historical records, and the original files are not overwritten. Replace the demo tickets, dates, authors, descriptions, and snapshots with verified history before operational use.
 
 ## Manual update workflow (proposed)
 1. Identify the change ticket in Jira.

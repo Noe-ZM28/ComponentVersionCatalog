@@ -23,7 +23,9 @@ const randomSample = items => {
   return shuffled.slice(0, 1 + Math.floor(Math.random() * shuffled.length));
 };
 
+let demoHistorySequence = 0;
 const demoHistory = (ticket, approvedDate, change, currentVersion = "1.0", example = "Ejemplo ilustrativo del elemento.", previews = {}) => {
+  const historyLength = 4 + demoHistorySequence++;
   const [major, minor] = currentVersion.split(".").map(Number);
   const previousVersion = minor > 0 ? `${major}.${minor - 1}` : `${Math.max(0, major - 1)}.9`;
   const previousDate = new Date(`${approvedDate}T12:00:00Z`);
@@ -36,11 +38,36 @@ const demoHistory = (ticket, approvedDate, change, currentVersion = "1.0", examp
   const currentChange = previews.currentChange || change;
   const proposedChange = previews.proposedChange || change;
   const previewBefore = sample => Object.keys(previews).length ? sample : "";
+  const olderChanges = [
+    "Se normalizaron nombres y valores de campos para el ejemplo.",
+    "Se incorporaron campos adicionales al registro de demostración.",
+    "Se creó la primera versión del ejemplo estructurado.",
+    "Se ajustó el formato del archivo de muestra.",
+    "Se actualizaron campos opcionales del registro.",
+    "Se revisó la estructura para mantener compatibilidad."
+  ];
+  const olderVersions = Array.from({ length: historyLength - 3 }, (_, index) => {
+    const olderVersion = `0.${String(Math.max(0, 9 - index)).padStart(2, "0")}`;
+    const olderDate = new Date(`${previousRecordedDate}T12:00:00Z`);
+    olderDate.setUTCDate(olderDate.getUTCDate() - (30 * (index + 1)));
+    const olderChange = olderChanges[index % olderChanges.length];
+
+    return demoVersion(
+      olderVersion,
+      `${ticket}-HIST-${index + 1}`,
+      olderDate.toISOString().slice(0, 10),
+      olderChange,
+      snapshotFor(olderVersion),
+      "Deprecated",
+      "Historial de demostración"
+    );
+  });
 
   return [
     demoVersion(`${major}.${minor + 1}`, `${ticket}-REV`, "2026-10-19", `Propuesta: ${proposedChange}`, snapshotFor(`${major}.${minor + 1}`), "In Review", "Equipo de cambios", "", previewBefore(currentExample), previewBefore(proposedExample)),
     demoVersion(currentVersion, ticket, approvedDate, currentChange, snapshotFor(currentVersion), "Approved",  "", previewBefore(previousExample), previewBefore(currentExample)),
-    demoVersion(previousVersion, `${ticket}-PREV`, previousRecordedDate, "Versión anterior conservada para consulta histórica.", snapshotFor(previousVersion), "Deprecated", "Ejemplo ficticio de versión reemplazada.", "", previewBefore(previousExample))
+    demoVersion(previousVersion, `${ticket}-PREV`, previousRecordedDate, "Versión anterior conservada para consulta histórica.", snapshotFor(previousVersion), "Deprecated", "Historial de demostración", "", previewBefore(previousExample)),
+    ...olderVersions
   ];
 };
 
