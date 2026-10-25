@@ -23,6 +23,8 @@ No build tools, external libraries, server, or database are required for this pr
 
 PC1 examples use the tagged-record layout shown in `dummy_card_records_50.txt` (`PAN`, `RecordId`, address fields, `ChipData`, `Track`, and `Data01`–`Data20`) with synthetic, masked values. Carrier variant labels show the bank variant name.
 
+Each item detail includes a `Chain` card with its chain name and step. The demo assigns PC1 items to PRD/step 12, carriers to CPP/step 10, and the current reports to R01/step 1, R02/step 2, and R03/step 3. These assignments are stored on each catalog record in `js/data.js`.
+
 ## File previews
 - PDF files can be previewed inline in the browser; text, SQL, C# and RCP files show an excerpt alongside their links.
 - `.rpt` and `.pkg3` package files are intentionally excluded from previews.

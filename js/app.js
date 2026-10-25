@@ -194,12 +194,21 @@ function showDetail(id) {
   $('detailSubtitle').textContent = [c.id, c.carrier].filter(Boolean).join(' · ');
   $('detailId').textContent = c.id;
   const newest = latestRecorded(c), approved = approvedVersion(c);
-  $('detailGrid').innerHTML = [
+  $('detailGrid').innerHTML = `<div class="detail-cell chain-card">
+    <div class="chain-card-item">
+      <div class="label">Chain</div>
+      <strong>${escapeHtml(c.chain.name)}</strong>
+    </div>
+    <div class="chain-card-item">
+      <div class="label">Step</div>
+      <strong>${escapeHtml(c.chain.step)}</strong>
+    </div>
+  </div>` + [
     ['Proyecto', c.project],
     ...(c.packageFile ? [['Archivo PKG3', c.packageFile.split("/").pop()]] : []),
     ...(c.reportFormat ? [['Formato', c.reportFormat]] : []),
     ['Última versión registrada', newest],
-    ['Última actualización', dateLabel(c.lastUpdated)],
+    ['Última actualización', dateLabel(c.lastUpdated)]
   ].map(([a, b]) => `<div class="detail-cell"><div class="label">${escapeHtml(a)}</div><strong>${escapeHtml(b)}</strong></div>`).join('');
   $('detailDescription').textContent = c.description;
   $('detailExamples').innerHTML = renderExamples(c);

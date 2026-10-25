@@ -103,6 +103,7 @@ const pc1 = (id, project, name, fileName, recordNumber, date, ticket, version = 
     project,
     name,
     category: "PC1",
+    chain: { name: "PRD", step: 12 },
     carrier: "Compartido",
     status: "Approved",
     owner: "Equipo de configuración",
@@ -130,11 +131,12 @@ const pc1 = (id, project, name, fileName, recordNumber, date, ticket, version = 
   };
 };
 
-const report = (id, project, name, outputFormat, folder, reportFiles, exampleFiles, date, ticket) => ({
+const report = (id, project, name, outputFormat, folder, reportFiles, exampleFiles, date, ticket, chain) => ({
   id,
   project,
   name,
   category: "Reporte",
+  chain,
   reportFormat: outputFormat,
   carrier: "Compartido",
   status: "Approved",
@@ -170,6 +172,7 @@ const carrierPackage = (id, project, packageNumber, design, variants, date) => {
     project,
     name: `Paquete ${packageNumber}`,
     category: "Carrier",
+    chain: { name: "CPP", step: 10 },
     carrier: `Design ${design}`,
     packageFile: `Carriers/${project}/Paquete ${packageNumber}/RichPDFPackage/Package_${packageNumber}.pkg3`,
     status: "Approved",
@@ -228,7 +231,7 @@ BEGIN
     END;`, previewTruncated: true }
     ],
     [{ label: "Ejemplo PDF", name: "July2026.pdf", path: "Reports/Proyecto 1/Reporte 1/Example/July2026.pdf", sizeBytes: 28767 }],
-    "2026-10-19", "DEMO-P1-RPT1"),
+    "2026-10-19", "DEMO-P1-RPT1", { name: "R01", step: 1 }),
   report("RPT-P1-002", "Proyecto 1", "Reporte RCP", "Archivo RCP",
     "Reports/Proyecto 1/Reporte 2",
     [
@@ -262,7 +265,7 @@ BEGIN
     END;`, previewTruncated: true }
     ],
     [{ label: "Ejemplo RCP", name: "20261019.RCP", path: "Reports/Proyecto 1/Reporte 2/Example/20261019.RCP", sizeBytes: 100, preview: "RCPFILE000001000000120261019CARD_PRODUCTION_20261019.RCP" }],
-    "2026-10-19", "DEMO-P1-RPT2"),
+    "2026-10-19", "DEMO-P1-RPT2", { name: "R02", step: 2 }),
   report("RPT-P2-001", "Proyecto 2", "Reporte de producción", "Archivo de texto",
     "Reports/Proyecto 2/Reporte 1",
     [{ label: "Generador · RefID SCRYYY000001", name: "SCRYYY000001.cs", path: "Reports/Proyecto 2/Reporte 1/SCRYYY000001.cs", sizeBytes: 3405, preview: `using System;
@@ -288,7 +291,7 @@ public partial class Script
     [{ label: "Ejemplo de salida", name: "Production20261019.txt", path: "Reports/Proyecto 2/Reporte 1/Example/Production20261019.txt", sizeBytes: 5098, preview: `PRDCARD202610190000000120261019DEBIT_CLASSIC       APPROVED  BATCH20261019001    PLANT_MX_01
 PRDCARD202610190000000220261018CREDIT_GOLD         APPROVED  BATCH20261018001    PLANT_MX_02
 PRDCARD202610190000000320261017PREPAID             APPROVED  BATCH20261017001    PLANT_MX_03`, previewTruncated: true }],
-    "2026-10-19", "DEMO-P2-RPT1"),
+    "2026-10-19", "DEMO-P2-RPT1", { name: "R03", step: 3 }),
 
   carrierPackage("CAR-P1-P1", "Proyecto 1", "1", "1", [
     { name: "Variante 1 · Asterion Mobility GmbH", fileName: "01_Asterion_Mobility_GmbH_Design1_Variant1.pdf" }

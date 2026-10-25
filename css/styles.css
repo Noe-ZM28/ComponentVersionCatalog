@@ -566,6 +566,8 @@ tbody tr:last-child td {
 .detail-grid {
     display: grid;
     grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+    grid-auto-rows: 1fr;
+    align-items: stretch;
     gap: 10px;
     margin: 16px 0
 }
@@ -712,6 +714,8 @@ tbody tr:last-child td {
 }
 
 .detail-cell {
+    box-sizing: border-box;
+    height: 100%;
     background: #f7f9fc;
     border: 1px solid var(--line);
     border-radius: 9px;
@@ -727,6 +731,24 @@ tbody tr:last-child td {
 .detail-cell strong {
     font-size: 13px;
     overflow-wrap: anywhere
+}
+
+.chain-card {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(72px, auto));
+    align-content: center;
+    gap: 16px;
+    margin: 0
+}
+
+.chain-card-item {
+    display: grid;
+    align-content: start;
+    gap: 3px
+}
+
+.chain-card-item .label {
+    margin-bottom: 0
 }
 
 .history-item {
