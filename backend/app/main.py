@@ -30,3 +30,10 @@ def root():
     return{
         "message": "Bienvenido a la API de Component Version Catalog",
     }
+
+@app.get("/hello")
+def hello():
+    return{
+        "message": "Hola Desarrollador",
+        "application": settings.app_name,
+    }
