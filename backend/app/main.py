@@ -7,6 +7,7 @@ from app.models import Project, Component, Ticket, Change
 from app.schemas.project import ProjectCreate, ProjectResponse
 from app.schemas.component import ComponentCreate, ComponentResponse
 from app.schemas.ticket import TicketCreate, TicketResponse, TicketUpdate
+from app.schemas.change import ChangeCreate, ChangeResponse, ChangeUpdate
 
 from app.config import settings
 from app.services.catalog_seed import seed_catalog
@@ -280,5 +281,125 @@ def update_ticket(
     db.refresh(ticket)
 
     return ticket
+
+@app.patch("/change/{change_id}", response_model=ChangeResponse)
+def update_change(
+    change_id: int,
+    change_data: ChangeUpdate,
+    db: Session = Depends(get_db)
+    ):
+    change = db.query(Change).filter(Change.id == change_id).first()
+    if not change:
+        raise HTTPException(
+            status_code=404,
+            detail="No existe un cambio con ese ID."
+        )
+
+    data = change_data.model_dump(exclude_unset=True)
+    if not data:
+        raise HTTPException(
+            status_code=400,
+            detail="Sin actualización."
+        )
+
+    changes_to_apply = {key: value for key, value in data.items() if getattr(change, key) != value}
+    if not changes_to_apply:
+        raise HTTPException(
+            status_code=400,
+            detail="Sin cambios para aplicar."
+        )
+
+    if "component_id" in changes_to_apply:
+        exist_component = db.query(Component).filter(Component.id == change_data.component_id).first()
+        if not exist_component:
+            raise HTTPException(
+                status_code=404,
+                detail="No existe un componente con ese ID."
+            )
+
+        if exist_component.project_id != change.project_id:
+            raise HTTPException(
+                status_code=400,
+                detail="El componente no pertenece al mismo proyecto que el cambio."
+            )
+
+        max_change_number = db.query(func.max(Change.change_number)).filter(Change.component_id == exist_component.id).scalar()
+        change.change_number=max_change_number + 1 if max_change_number is not None else 1
+        change.cadena=exist_component.cadena
+        change.step=exist_component.step
+
+    for key, value in changes_to_apply.items():
+        setattr(change, key, value)
+
+    db.commit()
+    db.refresh(change)
+
+    return change
+
+@app.post("/tickets/{ticket_id}", response_model=TicketResponse)
+def add_changes_to_ticket(
+    ticket_id: int,
+    new_changes: list[ChangeCreate],
+    db: Session = Depends(get_db)
+    ):
+    if not new_changes:
+        raise HTTPException(
+            status_code=400,
+            detail="Debe proporcionar al menos un cambio."
+        )
+
+    statement = (
+        select(Ticket)
+        .where(Ticket.id == ticket_id)
+        .options(selectinload(Ticket.changes), selectinload(Ticket.project))
+    )
+    ticket = db.scalars(statement).first()
+    if not ticket:
+        raise HTTPException(
+            status_code=404,
+            detail="No existe un ticket con ese ID."
+        )
+
+    next_numbers = {}
+    changes_to_add = []
+    for change_data in new_changes:
+        component = db.query(Component).filter(
+            Component.project_id == ticket.project_id,
+            Component.id == change_data.component_id
+        ).first()
+        if not component:
+            raise HTTPException(
+                status_code=404,
+                detail=f"No existe un componente con el ID '{change_data.component_id}' en el proyecto {ticket.project.name}."
+            )
+
+        if component.id in next_numbers:
+            next_number = next_numbers[component.id]
+        else:
+            max_change_number = db.query(func.max(Change.change_number)).filter(
+                Change.component_id == component.id
+            ).scalar()
+
+            next_number = max_change_number + 1 if max_change_number is not None else 1
+
+        next_numbers[component.id] = next_number + 1
+
+        new_change = Change(
+            project_id=ticket.project_id,
+            component_id=component.id,
+            change_number=next_number,
+            title=change_data.title,
+            description=change_data.description,
+            cadena=component.cadena,
+            step=component.step,
+        )
+        changes_to_add.append(new_change)
+
+    ticket.changes.extend(changes_to_add)
+    db.commit()
+    db.refresh(ticket)
+
+    return ticket
+
 
 

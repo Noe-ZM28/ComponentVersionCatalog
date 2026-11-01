@@ -5,7 +5,7 @@ from datetime import datetime
 class ChangeCreate(BaseModel):
     component_id: int
     title: str = Field(min_length=1, max_length=250)
-    description: str = Field(min_length=1)
+    description: str = Field(min_length=1, max_length=1000)
 
 
 class ChangeResponse(BaseModel):
@@ -22,3 +22,11 @@ class ChangeResponse(BaseModel):
     step: int
 
     model_config = ConfigDict(from_attributes=True)
+
+class ChangeUpdate(BaseModel):
+    component_id: int | None = Field(ge=1, default=None)
+    title: str | None = Field(min_length=1, max_length=250, default=None)
+    description: str | None = Field(min_length=1, max_length=1000, default=None)
+
+
+
