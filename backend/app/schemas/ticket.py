@@ -20,3 +20,13 @@ class TicketResponse(BaseModel):
     changes: list[ChangeResponse]
 
     model_config = ConfigDict(from_attributes=True)
+
+class TicketUpdate(BaseModel):
+    ticket_key: str | None = Field(min_length=1, max_length=100, default=None)
+    title: str | None = Field(min_length=1, max_length=250, default=None)
+    description : str | None = Field(min_length=1, max_length=1000, default=None)
+    ticket_url: str | None = Field(min_length=1, max_length = 500, default=None)
+
+
+
+
