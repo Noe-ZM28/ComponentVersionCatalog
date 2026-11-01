@@ -202,6 +202,33 @@ def seed_catalog(db: Session) -> dict[str, int]:
             ticket = db.scalar(
                 select(Ticket).where(Ticket.ticket_key == ticket_key)
             )
+            if ticket is not None and ticket.project_id != project.id:
+                raise ValueError(
+                    f"La clave de ticket '{ticket_key}' ya pertenece a otro proyecto."
+                )
+
+            if ticket is not None:
+                existing_change = db.scalar(
+                    select(Change).where(
+                        Change.component_id == component.id,
+                        Change.ticket_id == ticket.id,
+                    )
+                )
+                if existing_change is not None:
+                    continue
+
+            last_number = db.scalar(
+                select(func.max(Change.change_number)).where(
+                    Change.component_id == component.id
+                )
+            ) or 0
+            if ticket_key.endswith("-REV"):
+                status = "In Review"
+            elif ticket_key == record.ticket_key:
+                status = "Approved"
+            else:
+                status = "Deprecated"
+
             if ticket is None:
                 ticket = Ticket(
                     ticket_key=ticket_key,
@@ -217,31 +244,29 @@ def seed_catalog(db: Session) -> dict[str, int]:
                         time.min,
                         tzinfo=timezone.utc,
                     ),
+                    changes=[
+                        Change(
+                            project_id=project.id,
+                            component_id=component.id,
+                            change_number=last_number + 1,
+                            title=f"Versión {version} - {status}",
+                            description=change_description,
+                            cadena=component.cadena,
+                            step=component.step,
+                            created_at=datetime.combine(
+                                date.fromisoformat(recorded_date),
+                                time.min,
+                                tzinfo=timezone.utc,
+                            ),
+                        )
+                    ],
                 )
                 db.add(ticket)
-                db.flush()
                 created["tickets"] += 1
-
-            existing_change = db.scalar(
-                select(Change).where(
-                    Change.component_id == component.id,
-                    Change.ticket_id == ticket.id,
-                )
-            )
-            if existing_change is not None:
+                created["changes"] += 1
+                db.flush()
                 continue
 
-            last_number = db.scalar(
-                select(func.max(Change.change_number)).where(
-                    Change.component_id == component.id
-                )
-            ) or 0
-            if ticket_key.endswith("-REV"):
-                status = "In Review"
-            elif ticket_key == record.ticket_key:
-                status = "Approved"
-            else:
-                status = "Deprecated"
             db.add(
                 Change(
                     project_id=project.id,
@@ -250,8 +275,8 @@ def seed_catalog(db: Session) -> dict[str, int]:
                     change_number=last_number + 1,
                     title=f"Versión {version} - {status}",
                     description=change_description,
-                    cadena=record.chain,
-                    step=record.step,
+                    cadena=component.cadena,
+                    step=component.step,
                     created_at=datetime.combine(
                         date.fromisoformat(recorded_date),
                         time.min,
