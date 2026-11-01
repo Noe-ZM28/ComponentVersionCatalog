@@ -56,7 +56,7 @@ class Component(Base):
 
     # Ubicación actual del componente.
     cadena: Mapped[str] = mapped_column(String(150), nullable=False)
-    step: Mapped[str] = mapped_column(String(150), nullable=False)
+    step: Mapped[int] = mapped_column(Integer, nullable=False)
 
     last_modified_at: Mapped[datetime] = mapped_column(
         DateTime(timezone=True),
@@ -130,7 +130,7 @@ class Change(Base):
     # Se conserva la ubicación que tenía el componente al registrar
     # este cambio, aunque su ubicación actual cambie posteriormente.
     cadena: Mapped[str] = mapped_column(String(150), nullable=False)
-    step: Mapped[str] = mapped_column(String(150), nullable=False)
+    step: Mapped[int] = mapped_column(Integer, nullable=False)
 
     created_at: Mapped[datetime] = mapped_column(
         DateTime(timezone=True),
