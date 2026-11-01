@@ -3,9 +3,9 @@ from pydantic import BaseModel, ConfigDict, Field
 
 class ComponentCreate(BaseModel):
     name: str = Field(min_length=1, max_length=150)
-    description: str | None = None
-    cadena: str | None = None
-    step: str | None = None
+    description: str
+    cadena: str
+    step: str
 
 
 class ComponentResponse(BaseModel):

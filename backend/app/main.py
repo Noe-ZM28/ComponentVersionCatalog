@@ -1,6 +1,6 @@
 from fastapi import FastAPI, Depends, HTTPException
 from sqlalchemy import select
-from sqlalchemy.orm import Session
+from sqlalchemy.orm import Session, selectinload
 
 from app.database import get_db
 from app.models import Project, Component
@@ -49,7 +49,7 @@ def hello():
 def list_projects(
     db: Session = Depends(get_db)
     ):
-    statement = select(Project).order_by(Project.id)
+    statement = select(Project).order_by(Project.id).options(selectinload(Project.components))
     projects = db.scalars(statement).all()
 
     return projects
@@ -59,7 +59,8 @@ def get_project(
     project_id: int,
     db: Session = Depends(get_db)
     ):
-    project = db.get(Project, project_id)
+    statement = select(Project).where(Project.id == project_id).options(selectinload(Project.components))
+    project = db.scalars(statement).first()
 
     if not project:
         raise HTTPException(
@@ -133,24 +134,5 @@ def create_component(
     db.refresh(new_component)
 
     return new_component
-
-@app.get("/projects/{project_id}/components", response_model=list[ComponentResponse])
-def list_components(
-    project_id: int,
-    db: Session = Depends(get_db)
-    ):
-
-    project = db.query(Project).filter(Project.id == project_id).first()
-
-    if not project:
-        raise HTTPException(
-            status_code=404,
-            detail="No existe un proyecto con ese nombre."
-        )
-
-    components = db.query(Component).filter(Component.project_id == project_id).all()
-
-    return components
-
 
 

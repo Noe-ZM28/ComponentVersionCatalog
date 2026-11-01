@@ -4,12 +4,12 @@ from .component import ComponentResponse
 
 class ProjectCreate(BaseModel):
     name: str = Field(min_length=1, max_length=150)
-    description: str | None = None
+    description: str
 
 class ProjectResponse(BaseModel):
     id: int
     name: str
-    description: str | None
+    description: str
     is_active: bool
     components: list[ComponentResponse]
 

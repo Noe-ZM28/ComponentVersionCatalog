@@ -23,7 +23,7 @@ class Project(Base):
 
     id: Mapped[int] = mapped_column(primary_key=True)
     name: Mapped[str] = mapped_column(String(150), unique=True, index=True)
-    description: Mapped[str | None] = mapped_column(Text, nullable=True)
+    description: Mapped[str] = mapped_column(Text, nullable=False)
     is_active: Mapped[bool] = mapped_column(
         Boolean, default=True, nullable=False
     )
@@ -47,11 +47,11 @@ class Component(Base):
         ForeignKey("projects.id"), index=True
     )
     name: Mapped[str] = mapped_column(String(150), index=True)
-    description: Mapped[str | None] = mapped_column(Text, nullable=True)
+    description: Mapped[str] = mapped_column(Text, nullable=False)
 
     # Ubicación actual del componente.
-    cadena: Mapped[str | None] = mapped_column(String(150), nullable=True)
-    step: Mapped[str | None] = mapped_column(String(150), nullable=True)
+    cadena: Mapped[str] = mapped_column(String(150), nullable=False)
+    step: Mapped[str] = mapped_column(String(150), nullable=False)
 
     last_modified_at: Mapped[datetime] = mapped_column(
         DateTime(timezone=True),
@@ -82,17 +82,15 @@ class Ticket(Base):
         String(100), unique=True, index=True
     )
     title: Mapped[str] = mapped_column(String(250))
-    description: Mapped[str | None] = mapped_column(Text, nullable=True)
-    ticket_url: Mapped[str | None] = mapped_column(
-        String(500), nullable=True
+    description: Mapped[str] = mapped_column(Text, nullable=False)
+    ticket_url: Mapped[str] = mapped_column(
+        String(500), nullable=False
     )
-    last_modified_at: Mapped[datetime] = mapped_column(
+    registered_at: Mapped[datetime] = mapped_column(
         DateTime(timezone=True),
         default=utc_now,
-        onupdate=utc_now,
         nullable=False,
     )
-
     changes: Mapped[list["Change"]] = relationship(
         back_populates="ticket"
     )
@@ -114,12 +112,12 @@ class Change(Base):
     change_number: Mapped[int] = mapped_column(Integer, nullable=False)
 
     title: Mapped[str] = mapped_column(String(250))
-    description: Mapped[str | None] = mapped_column(Text, nullable=True)
+    description: Mapped[str] = mapped_column(Text, nullable=False)
 
     # Se conserva la ubicación que tenía el componente al registrar
     # este cambio, aunque su ubicación actual cambie posteriormente.
-    cadena: Mapped[str | None] = mapped_column(String(150), nullable=True)
-    step: Mapped[str | None] = mapped_column(String(150), nullable=True)
+    cadena: Mapped[str] = mapped_column(String(150), nullable=False)
+    step: Mapped[str] = mapped_column(String(150), nullable=False)
 
     created_at: Mapped[datetime] = mapped_column(
         DateTime(timezone=True),
@@ -163,8 +161,8 @@ class FileRecord(Base):
     )
     storage_path: Mapped[str] = mapped_column(String(1000))
 
-    content_type: Mapped[str | None] = mapped_column(
-        String(150), nullable=True
+    content_type: Mapped[str] = mapped_column(
+        String(150), nullable=False
     )
     size_bytes: Mapped[int] = mapped_column(Integer, nullable=False)
     sha256: Mapped[str] = mapped_column(String(64), index=True)
@@ -196,9 +194,11 @@ class ChangeFile(Base):
     # Valores previstos: before, after, attachment.
     role: Mapped[str] = mapped_column(String(30), nullable=False)
 
-    description: Mapped[str | None] = mapped_column(
-        Text, nullable=True
+    description: Mapped[str] = mapped_column(
+        Text, nullable=False
     )
 
     change: Mapped["Change"] = relationship(back_populates="files")
     file: Mapped["FileRecord"] = relationship(back_populates="changes")
+
+
