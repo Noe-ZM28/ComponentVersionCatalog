@@ -12,8 +12,8 @@ class ComponentResponse(BaseModel):
     id: int
     project_id: int
     name: str
-    description: str | None
-    cadena: str | None
-    step: str | None
+    description: str
+    cadena: str
+    step: str
 
     model_config = ConfigDict(from_attributes=True)
