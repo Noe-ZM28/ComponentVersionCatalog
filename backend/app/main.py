@@ -1,9 +1,9 @@
 from fastapi import FastAPI, Depends, HTTPException
-from sqlalchemy import select
+from sqlalchemy import select, func
 from sqlalchemy.orm import Session, selectinload
 
 from app.database import get_db
-from app.models import Project, Component, Ticket
+from app.models import Project, Component, Ticket, Change
 from app.schemas.project import ProjectCreate, ProjectResponse
 from app.schemas.component import ComponentCreate, ComponentResponse
 from app.schemas.ticket import TicketCreate, TicketResponse
@@ -159,33 +159,55 @@ def create_ticket(
     ticket_data: TicketCreate,
     db: Session = Depends(get_db)
     ):
-    
-    project = db.query(Project).filter(Project.id == project_id).first()
 
+    project = db.query(Project).filter(Project.id == project_id).first()
     if not project:
         raise HTTPException(
             status_code=404,
             detail="No existe un proyecto con ese nombre."
         )
 
+    ticket_key = db.query(Ticket).filter(Ticket.ticket_key == ticket_data.ticket_key).first()
+    if ticket_key:
+        raise HTTPException(
+            status_code=409,
+            detail="Ya existe un ticket con esa clave."
+        )
+
+    new_ticket = Ticket()
+
+    changes = []
     for change in ticket_data.changes:
         component = db.query(Component).filter(
             Component.project_id == project_id,
             Component.id == change.component_id
         ).first()
-
         if not component:
             raise HTTPException(
                 status_code=404,
                 detail=f"No existe un componente con el ID '{change.component_id}' en el proyecto {project.name}."
             )
 
+        max_change_number = db.query(func.max(Change.change_number)).filter(Change.component_id == component.id).scalar()
+
+        new_change = Change(
+            project_id=project_id,
+            component_id=component.id,
+            change_number=max_change_number + 1 if max_change_number is not None else 1,
+            title=change.title,
+            description=change.description,
+            cadena=component.cadena,
+            step=component.step,
+        )
+        changes.append(new_change)
+
     new_ticket = Ticket(
         project_id=project_id,
         ticket_key=ticket_data.ticket_key,
         title=ticket_data.title,
         description=ticket_data.description,
-        ticket_url=ticket_data.ticket_url
+        ticket_url=ticket_data.ticket_url,
+        changes = changes
     )
     db.add(new_ticket)
     db.commit()
@@ -198,6 +220,14 @@ def list_tickets(
     project_id: int,
     db: Session = Depends(get_db)
     ):
+
+    project = db.query(Project).filter(Project.id == project_id).first()
+    if not project:
+        raise HTTPException(
+            status_code=404,
+            detail="No existe un proyecto con ese nombre."
+        )
+
     statement = (
         select(Ticket)
         .where(Ticket.project_id == project_id)
