@@ -174,8 +174,6 @@ def create_ticket(
             detail="Ya existe un ticket con esa clave."
         )
 
-    new_ticket = Ticket()
-
     changes = []
     for change in ticket_data.changes:
         component = db.query(Component).filter(
