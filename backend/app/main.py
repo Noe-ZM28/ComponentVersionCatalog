@@ -3,9 +3,10 @@ from sqlalchemy import select
 from sqlalchemy.orm import Session, selectinload
 
 from app.database import get_db
-from app.models import Project, Component
+from app.models import Project, Component, Ticket
 from app.schemas.project import ProjectCreate, ProjectResponse
 from app.schemas.component import ComponentCreate, ComponentResponse
+from app.schemas.ticket import TicketCreate, TicketResponse
 
 from app.config import settings
 from app.services.catalog_seed import seed_catalog
@@ -113,7 +114,12 @@ def create_component(
     db: Session = Depends(get_db)
     ):
 
-    project = db.query(Project).filter(Project.id == project_id).first()
+    project_statement = (
+        select(Project)
+        .where(Project.id == project_id)
+        .options(selectinload(Project.components))
+    )
+    project = db.scalars(project_statement).first()
 
     if not project:
         raise HTTPException(
@@ -121,9 +127,11 @@ def create_component(
             detail="No existe un proyecto con ese nombre."
         )
     
-    component_exists = db.query(Component).filter(
+    component_statement = select(Component).where(
         Component.project_id == project_id,
-        Component.name == component_data.name).first()
+        Component.name == component_data.name,
+    )
+    component_exists = db.scalars(component_statement).first()
 
     if component_exists:
         raise HTTPException(
@@ -145,4 +153,64 @@ def create_component(
 
     return new_component
 
-#@app.post("/tickets", response_model=TicketResponse, status_code=201)
+@app.post("/projects/{project_id}/tickets", response_model=TicketResponse, status_code=201)
+def create_ticket(
+    project_id:int,
+    ticket_data: TicketCreate,
+    db: Session = Depends(get_db)
+    ):
+    
+    project = db.query(Project).filter(Project.id == project_id).first()
+
+    if not project:
+        raise HTTPException(
+            status_code=404,
+            detail="No existe un proyecto con ese nombre."
+        )
+
+    for change in ticket_data.changes:
+        component = db.query(Component).filter(
+            Component.project_id == project_id,
+            Component.id == change.component_id
+        ).first()
+
+        if not component:
+            raise HTTPException(
+                status_code=404,
+                detail=f"No existe un componente con el ID '{change.component_id}' en el proyecto {project.name}."
+            )
+
+    new_ticket = Ticket(
+        project_id=project_id,
+        ticket_key=ticket_data.ticket_key,
+        title=ticket_data.title,
+        description=ticket_data.description,
+        ticket_url=ticket_data.ticket_url
+    )
+    db.add(new_ticket)
+    db.commit()
+    db.refresh(new_ticket)
+
+    return new_ticket
+
+@app.get("/projects/{project_id}/tickets", response_model=list[TicketResponse])
+def list_tickets(
+    project_id: int,
+    db: Session = Depends(get_db)
+    ):
+    statement = (
+        select(Ticket)
+        .where(Ticket.project_id == project_id)
+        .order_by(Ticket.id)
+        .options(selectinload(Ticket.changes))
+    )
+    tickets = db.scalars(statement).all()
+
+    return tickets
+
+
+
+
+
+
+
