@@ -33,8 +33,13 @@ class Project(Base):
         onupdate=utc_now,
         nullable=False,
     )
-
+    tickets: Mapped[list["Ticket"]] = relationship(
+        back_populates="project"
+    )
     components: Mapped[list["Component"]] = relationship(
+        back_populates="project"
+    )
+    changes: Mapped[list["Change"]] = relationship(
         back_populates="project"
     )
 
@@ -81,6 +86,9 @@ class Ticket(Base):
     ticket_key: Mapped[str] = mapped_column(
         String(100), unique=True, index=True
     )
+    project_id: Mapped[int] = mapped_column(
+        ForeignKey("projects.id"), index=True
+    )
     title: Mapped[str] = mapped_column(String(250))
     description: Mapped[str] = mapped_column(Text, nullable=False)
     ticket_url: Mapped[str] = mapped_column(
@@ -94,13 +102,18 @@ class Ticket(Base):
     changes: Mapped[list["Change"]] = relationship(
         back_populates="ticket"
     )
+    project: Mapped["Project"] = relationship(
+        back_populates="tickets"
+    )
 
 
 class Change(Base):
     __tablename__ = "changes"
 
     id: Mapped[int] = mapped_column(primary_key=True)
-
+    project_id: Mapped[int] = mapped_column(
+        ForeignKey("projects.id"), index=True
+    )
     component_id: Mapped[int] = mapped_column(
         ForeignKey("components.id"), index=True
     )
@@ -135,7 +148,11 @@ class Change(Base):
     component: Mapped["Component"] = relationship(
         back_populates="changes"
     )
-    ticket: Mapped["Ticket"] = relationship(back_populates="changes")
+    project: Mapped["Project"] = relationship(
+        back_populates="changes"
+    )
+    ticket: Mapped["Ticket"] = relationship(
+        back_populates="changes")
     files: Mapped[list["ChangeFile"]] = relationship(
         back_populates="change",
         cascade="all, delete-orphan",
