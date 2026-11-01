@@ -8,6 +8,7 @@ from app.schemas.project import ProjectCreate, ProjectResponse
 from app.schemas.component import ComponentCreate, ComponentResponse
 
 from app.config import settings
+from app.services.catalog_seed import seed_catalog
 
 
 app = FastAPI(
@@ -30,6 +31,15 @@ def about():
         "project": "Component Version Catalog",
         "version": "0.1.0",
         "database": "SQLite",
+    }
+
+
+@app.post("/catalog/seed-demo")
+def seed_demo_catalog(db: Session = Depends(get_db)):
+    created = seed_catalog(db)
+    return {
+        "message": "Catálogo de demostración cargado.",
+        "created": created,
     }
     
 @app.get("/")
@@ -135,4 +145,4 @@ def create_component(
 
     return new_component
 
-
+#@app.post("/tickets", response_model=TicketResponse, status_code=201)
