@@ -64,6 +64,8 @@ class Component(Base):
         onupdate=utc_now,
         nullable=False,
     )
+    source_type: Mapped[str] = mapped_column(String(30), nullable=False, default="other")
+    source_reference: Mapped[str] = mapped_column(Text, nullable=True, default=None)
 
     project: Mapped["Project"] = relationship(back_populates="components")
     changes: Mapped[list["Change"]] = relationship(
@@ -171,6 +173,7 @@ class FileRecord(Base):
     __tablename__ = "files"
 
     id: Mapped[int] = mapped_column(primary_key=True)
+    type_file: Mapped[str] = mapped_column(String(30), nullable=False)
 
     original_name: Mapped[str] = mapped_column(String(255))
     stored_name: Mapped[str] = mapped_column(

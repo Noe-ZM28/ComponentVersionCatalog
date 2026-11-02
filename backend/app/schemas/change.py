@@ -1,6 +1,8 @@
 from pydantic import BaseModel, ConfigDict, Field
 from datetime import datetime
 
+from .change_file import ChangeFileResponse
+
 
 class ChangeCreate(BaseModel):
     component_id: int
@@ -20,6 +22,7 @@ class ChangeResponse(BaseModel):
     description: str
     cadena: str
     step: int
+    files: list[ChangeFileResponse]
 
     model_config = ConfigDict(from_attributes=True)
 
