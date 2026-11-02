@@ -7,7 +7,6 @@ class FileRecordResponse(BaseModel):
     id: int
     type_file: str = Field(min_length=1, max_length=30)
     original_name: str
-    stored_name: str
     content_type: str
     size_bytes: int
     last_modified_at: datetime
