@@ -1,233 +1,550 @@
-const categories = [...new Set(CATALOG.map(c => c.category))];
-const projects = [...new Set(CATALOG.map(c => c.project))];
-const $ = id => document.getElementById(id);
-let selectedCategory = "PC1";
-const escapeHtml = s => String(s ?? "").replace(/[&<>"']/g, c => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]));
-const statusClass = s => ({ 'Approved': 'approved', 'In Review': 'review', 'Draft': 'draft', 'Deprecated': 'deprecated', 'Pending verification': 'pending' }[s] || 'draft');
-const pill = s => `<span class="pill ${statusClass(s)}">${escapeHtml(s)}</span>`;
-const approvedVersion = c => c.versions.find(v => v.status === "Approved")?.version || "Not confirmed";
-const latestRecorded = c => [...c.versions].sort((a, b) => b.recordedDate.localeCompare(a.recordedDate))[0]?.version || "—";
-const dateLabel = d => d ? new Date(d + "T12:00:00").toLocaleDateString("en-GB", { day: "2-digit", month: "short", year: "numeric" }) : "Not recorded";
-function init() {
-  initTheme();
-  projects.forEach(project => $('projectFilter').insertAdjacentHTML('beforeend', `<option>${escapeHtml(project)}</option>`));
-  renderCategories(); renderRows();
-  $('projectFilter').addEventListener('change', () => { renderCategories(); renderRows() });
-  $('backBtn').addEventListener('click', showHome);
-  document.querySelectorAll('[data-detail-tab]').forEach(button => button.addEventListener('click', () => setDetailTab(button.dataset.detailTab)));
-  ['historyList', 'detailExamples'].forEach(containerId => $(containerId).addEventListener('toggle', event => {
-    const openedFile = event.target;
-    if (!openedFile.matches?.('.history-file-item') || !openedFile.open) return;
+(() => {
+  "use strict";
 
-    $(containerId).querySelectorAll('.history-file-item[open]').forEach(file => {
-      if (file !== openedFile) file.open = false;
-    });
-  }, true));
-}
-function initTheme() {
-  const savedTheme = localStorage.getItem('catalog-theme');
-  const prefersDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
-  setTheme(savedTheme || (prefersDark ? 'dark' : 'light'));
-  $('themeToggle').addEventListener('click', () => {
-    const nextTheme = document.documentElement.dataset.theme === 'dark' ? 'light' : 'dark';
-    localStorage.setItem('catalog-theme', nextTheme);
-    setTheme(nextTheme);
-  });
-}
-function setTheme(theme) {
-  document.documentElement.dataset.theme = theme;
-  const isDark = theme === 'dark';
-  $('themeToggle').textContent = isDark ? 'Modo claro' : 'Modo nocturno';
-  $('themeToggle').setAttribute('aria-pressed', String(isDark));
-}
-function setDetailTab(activePane) {
-  document.querySelectorAll('.detail-pane').forEach(pane => pane.classList.toggle('active', pane.id === activePane));
-  document.querySelectorAll('[data-detail-tab]').forEach(button => {
-    const isActive = button.dataset.detailTab === activePane;
-    button.classList.toggle('active', isActive);
-    button.setAttribute('aria-selected', String(isActive));
-  });
-}
-function renderComparedLines(content, comparison, changeClass, extension = "") {
-  const lines = content.split(/\r?\n/);
-  const comparisonLines = comparison.split(/\r?\n/);
-  return lines.map((line, index) => `<span class="diff-line ${line === comparisonLines[index] ? '' : changeClass}">${highlightText(line, extension) || ' '}</span>`).join('');
-}
-function highlightText(text, extension) {
-  const codeExtensions = new Set(["cs", "sql", "js", "ts", "html", "htm", "xml", "json", "py", "java", "c", "cpp", "h", "sh", "bash", "yml", "yaml"]);
-  const isCode = codeExtensions.has(extension);
-  const tokens = /(<!--[\s\S]*?-->|<\/?[A-Za-z][\w:.-]*(?:\s+[^<>]*?)?\/?>|\/\*[\s\S]*?\*\/|--[^\r\n]*|\/\/[^\r\n]*|#[^\r\n]*|@"(?:""|[^"])*"|"(?:\\.|[^"\\])*"|'(?:\\.|[^'\\])*'|\b(?:SELECT|FROM|WHERE|JOIN|ON|AS|AND|OR|NOT|NULL|INSERT|INTO|VALUES|UPDATE|SET|DELETE|CREATE|ALTER|PROCEDURE|BEGIN|END|IF|ELSE|RETURN|DECLARE|WITH|NOCOUNT|using|namespace|class|public|private|protected|static|void|string|int|bool|var|new|return|async|await|const|let|function|true|false|null|def|import|from|for|while|try|catch|finally|throw|extends|implements|interface|package|echo|export|default)\b|\b\d+(?:\.\d+)?\b)/gi;
-  let result = "";
-  let cursor = 0;
-  for (const match of text.matchAll(tokens)) {
-    const token = match[0];
-    result += escapeHtml(text.slice(cursor, match.index));
-    let highlighted = escapeHtml(token);
-    if (/^<!--/.test(token) || (isCode && /^(?:\/\*|--|\/\/|#)/.test(token))) {
-      highlighted = `<span class="syntax-comment">${highlighted}</span>`;
-    } else if (/^<\/?[A-Za-z]/.test(token)) {
-      const tag = token.match(/^(<\/?)([A-Za-z][\w:.-]*)([\s\S]*?)(\/?>)$/);
-      if (tag) {
-        const attributes = tag[3].replace(/([A-Za-z_:][\w:.-]*)(\s*=\s*)("(?:[^"]*)"|'(?:[^']*)')/g,
-          (_, name, equals, value) => `<span class="syntax-attribute">${escapeHtml(name)}</span>${escapeHtml(equals)}<span class="syntax-string">${escapeHtml(value)}</span>`);
-        highlighted = `${escapeHtml(tag[1])}<span class="syntax-tag">${escapeHtml(tag[2])}</span>${attributes}${escapeHtml(tag[4])}`;
-      }
-    } else if (isCode && /^["'@]/.test(token)) {
-      highlighted = `<span class="syntax-string">${highlighted}</span>`;
-    } else if (isCode && /^\d/.test(token)) {
-      highlighted = `<span class="syntax-number">${highlighted}</span>`;
-    } else if (isCode && /^(?:SELECT|FROM|WHERE|JOIN|ON|AS|AND|OR|NOT|NULL|INSERT|INTO|VALUES|UPDATE|SET|DELETE|CREATE|ALTER|PROCEDURE|BEGIN|END|IF|ELSE|RETURN|DECLARE|WITH|NOCOUNT|using|namespace|class|public|private|protected|static|void|string|int|bool|var|new|async|await|const|let|function|true|false|null|def|import|for|while|try|catch|finally|throw|extends|implements|interface|package|echo|export|default)$/i.test(token)) {
-      highlighted = `<span class="syntax-keyword">${highlighted}</span>`;
+  const API_BASE = (window.CVC_API_BASE || window.location.origin).replace(/\/+$/, "");
+  const $ = id => document.getElementById(id);
+  const state = {
+    projects: [],
+    ticketsByProject: new Map(),
+    selectedProjectId: "",
+    selectedCategory: "",
+    selectedComponentId: null,
+    currentComponent: null,
+    toastTimer: null
+  };
+
+  const escapeHtml = value => String(value ?? "").replace(/[&<>"']/g, character => ({
+    "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;"
+  })[character]);
+
+  async function api(path, options = {}) {
+    const response = await fetch(`${API_BASE}${path}`, options);
+    const contentType = response.headers.get("content-type") || "";
+    const body = contentType.includes("application/json")
+      ? await response.json()
+      : await response.text();
+
+    if (!response.ok) {
+      const detail = typeof body === "object" && body !== null
+        ? body.detail || body.message
+        : body;
+      throw new Error(detail || `Error HTTP ${response.status}`);
     }
-    result += highlighted;
-    cursor = match.index + token.length;
+
+    return body;
   }
-  return result + escapeHtml(text.slice(cursor));
-}
-function renderFileList(files, fullPreview = false) {
-  if (!files?.length) return `<p class="small muted">No hay archivos de ejemplo asociados a esta versión.</p>`;
-  const previewClass = fullPreview ? " detail-file-preview" : "";
-  return `<section class="history-files${fullPreview ? " detail-files" : ""}" aria-label="Archivos de ejemplo">
-    <div class="history-file-list">${files.map(file => {
-    const extension = file.name.split(".").pop().toLowerCase();
-    const isEmpty = file.sizeBytes === 0;
-    const previewUnavailable = ["rpt", "pkg3", "pgk3"].includes(extension);
-    const fileLink = file.path && !previewUnavailable ? `<div class="history-file-actions"><a class="btn small" href="${escapeHtml(encodeURI(file.path))}" target="_blank" rel="noopener">Abrir archivo en una nueva pestaña</a></div>` : "";
-    const preview = previewUnavailable
-      ? `<div class="small muted">La previsualización de archivos .${escapeHtml(extension)} no está disponible.</div>`
-      : isEmpty
-      ? `<div class="missing-file">No hay contenido para previsualizar.</div>`
-      : extension === "pdf" && file.path
-        ? `<iframe class="${fullPreview ? "detail-file-pdf" : ""}" src="${escapeHtml(encodeURI(file.path))}" title="Previsualización de ${escapeHtml(file.name)}" loading="lazy"></iframe>`
-        : file.preview
-        ? `<pre class="sample history-file-sample${previewClass}">${highlightText(file.preview, extension)}${file.previewTruncated ? "\n\n… Vista parcial. Abre el archivo para consultar el contenido completo." : ""}</pre>`
-          : `<div class="small muted">No hay una vista previa disponible para este archivo.</div>`;
-    return `<details class="history-file-item">
-          <summary><span>${escapeHtml(file.label || file.name)}</span><span class="small muted">${escapeHtml(extension.toUpperCase())}</span></summary>
-          <div class="history-file-content">
-          ${fileLink}
-          ${preview}
-          </div>
-        </details>`;
-  }).join("")}</div>
-  </section>`;
-}
-function renderHistoryFiles(files) {
-  return renderFileList(files);
-}
-function renderCategories() {
-  const selected = selectedCategory;
-  const hasProject = Boolean($('projectFilter').value);
-  $('categoryPrompt').hidden = hasProject;
-  $('categoryCards').innerHTML = categories.map(cat => `<button class="category ${selected === cat ? 'active' : ''}" data-cat="${escapeHtml(cat)}" ${hasProject ? "" : "disabled"}><strong>${escapeHtml(cat)}</strong></button>`).join('');
-  document.querySelectorAll('[data-cat]').forEach(b => b.addEventListener('click', () => {
-    if (selectedCategory === b.dataset.cat) return;
-    selectedCategory = b.dataset.cat;
+
+  function showToast(message, isError = false) {
+    const toast = $("toast");
+    toast.textContent = message;
+    toast.classList.toggle("error", isError);
+    toast.classList.add("visible");
+    window.clearTimeout(state.toastTimer);
+    state.toastTimer = window.setTimeout(() => toast.classList.remove("visible"), 4200);
+  }
+
+  function showGlobalError(error) {
+    const message = $("globalMessage");
+    message.textContent = error.message || "No fue posible completar la solicitud.";
+    message.hidden = false;
+  }
+
+  function setConnection(connected, message = "") {
+    const status = $("connectionStatus");
+    status.textContent = connected ? "API conectada" : "API no disponible";
+    status.classList.toggle("offline", !connected);
+    status.title = message;
+  }
+
+  function currentProject() {
+    return state.projects.find(project => String(project.id) === state.selectedProjectId) || null;
+  }
+
+  function projectTickets(projectId = state.selectedProjectId) {
+    return state.ticketsByProject.get(String(projectId)) || [];
+  }
+
+  function componentType(component) {
+    if (component.source_type && component.source_type !== "other") return component.source_type;
+    return component.name.split(" - ")[0] || "Componente";
+  }
+
+  function formatDate(value) {
+    if (!value) return "Sin fecha";
+    const date = new Date(value);
+    return Number.isNaN(date.getTime())
+      ? "Sin fecha"
+      : date.toLocaleDateString("es-MX", { day: "2-digit", month: "short", year: "numeric" });
+  }
+
+  function ticketLink(ticket) {
+    const ticketKey = escapeHtml(ticket.ticket_key);
+    try {
+      const url = new URL(ticket.ticket_url, API_BASE);
+      if (url.protocol === "http:" || url.protocol === "https:") {
+        return `<a class="history-ticket-link" href="${escapeHtml(url.href)}" target="_blank" rel="noopener noreferrer">${ticketKey}</a>`;
+      }
+    } catch {
+      // Show the ticket key as text if its URL is invalid.
+    }
+    return `<strong>${ticketKey}</strong>`;
+  }
+
+  function allChanges() {
+    return [...state.ticketsByProject.values()].flatMap(tickets =>
+      tickets.flatMap(ticket => (ticket.changes || []).map(change => ({ ...change, ticket })))
+    );
+  }
+
+  async function loadCatalog() {
+    $("globalMessage").hidden = true;
+    $("connectionStatus").textContent = "Conectando…";
+    try {
+      const projects = await api("/projects");
+      state.projects = projects;
+      const ticketResults = await Promise.all(projects.map(async project => {
+        const tickets = await api(`/projects/${project.id}/tickets`);
+        return [String(project.id), tickets];
+      }));
+      state.ticketsByProject = new Map(ticketResults);
+      setConnection(true);
+      renderProjectOptions();
+      renderStats();
+      renderCategories();
+      renderComponents();
+      const project = currentProject();
+      $("projectDescription").textContent = project?.description || "";
+    } catch (error) {
+      setConnection(false, error.message);
+      showGlobalError(error);
+      $("projectSelectionPrompt").textContent =
+        `No se pudo cargar el catálogo. Comprueba que el backend esté activo (${API_BASE}) y vuelve a intentar.`;
+    }
+  }
+
+  function renderProjectOptions() {
+    const select = $("projectFilter");
+    const selected = state.selectedProjectId;
+    select.innerHTML = '<option value="">Selecciona un proyecto</option>' +
+      state.projects.map(project =>
+        `<option value="${project.id}">${escapeHtml(project.name)}</option>`
+      ).join("");
+    select.value = state.projects.some(project => String(project.id) === selected) ? selected : "";
+    state.selectedProjectId = select.value;
+    $("createComponentBtn").disabled = !state.selectedProjectId;
+    $("createTicketBtn").disabled = !state.selectedProjectId;
+    $("projectElementsView").hidden = !state.selectedProjectId;
+    $("projectSelectionPrompt").hidden = Boolean(state.selectedProjectId);
+    $("projectDescription").textContent = currentProject()?.description || "";
+  }
+
+  function renderStats() {
+    const components = state.projects.flatMap(project => project.components || []);
+    const tickets = [...state.ticketsByProject.values()].flat();
+    $("projectCount").textContent = state.projects.length;
+    $("componentCount").textContent = components.length;
+    $("ticketCount").textContent = tickets.length;
+    $("changeCount").textContent = tickets.reduce(
+      (count, ticket) => count + (ticket.changes || []).length, 0
+    );
+  }
+
+  function renderCategories() {
+    const components = currentProject()?.components || [];
+    const categories = [...new Set(components.map(componentType))].sort();
+    if (state.selectedCategory && !categories.includes(state.selectedCategory)) {
+      state.selectedCategory = "";
+    }
+    $("categoryCards").innerHTML = [
+      `<button class="category ${state.selectedCategory === "" ? "active" : ""}" type="button" data-category=""><strong>Todos</strong><span>${components.length}</span></button>`,
+      ...categories.map(category => {
+        const count = components.filter(component => componentType(component) === category).length;
+        return `<button class="category ${state.selectedCategory === category ? "active" : ""}" type="button" data-category="${escapeHtml(category)}"><strong>${escapeHtml(category)}</strong><span>${count}</span></button>`;
+      })
+    ].join("");
+    $("categoryCards").querySelectorAll("[data-category]").forEach(button => {
+      button.addEventListener("click", () => {
+        state.selectedCategory = button.dataset.category;
+        renderCategories();
+        renderComponents();
+      });
+    });
+  }
+
+  function componentChanges(componentId) {
+    return allChanges()
+      .filter(change => change.component_id === componentId)
+      .sort((left, right) => new Date(right.created_at) - new Date(left.created_at));
+  }
+
+  function renderComponents() {
+    const project = currentProject();
+    const hasProject = Boolean(project);
+    $("projectElementsView").hidden = !hasProject;
+    $("projectSelectionPrompt").hidden = hasProject;
+    if (!project) {
+      $("componentRows").innerHTML = "";
+      $("emptyState").hidden = true;
+      $("componentSummary").textContent = "";
+      return;
+    }
+
+    const search = $("componentSearch").value.trim().toLocaleLowerCase();
+    const list = (project.components || []).filter(component => {
+      const matchesCategory = !state.selectedCategory || componentType(component) === state.selectedCategory;
+      const matchesSearch = !search ||
+        `${component.name} ${component.description} ${component.cadena}`.toLocaleLowerCase().includes(search);
+      return matchesCategory && matchesSearch;
+    }).sort((left, right) => left.name.localeCompare(right.name, "es"));
+
+    $("componentSummary").textContent = `${list.length} de ${(project.components || []).length} componentes`;
+    $("componentRows").innerHTML = list.map(component => {
+      const changes = componentChanges(component.id);
+      const latest = changes[0];
+      return `<tr>
+        <td><button class="text-button component-name" type="button" data-open-component="${component.id}">${escapeHtml(component.name)}</button><div class="subline">${escapeHtml(component.source_type || "other")}${component.source_reference ? ` · ${escapeHtml(component.source_reference)}` : ""}</div></td>
+        <td><strong>${escapeHtml(component.cadena)}</strong><span class="muted"> / ${escapeHtml(component.step)}</span></td>
+        <td>${escapeHtml(componentType(component))}</td>
+        <td>${latest ? `<strong>#${latest.change_number}</strong><div class="subline">${ticketLink(latest.ticket)}</div>` : "—"}</td>
+        <td><button class="btn small" type="button" data-open-component="${component.id}">Ver</button></td>
+      </tr>`;
+    }).join("");
+    $("emptyState").hidden = list.length > 0;
+    $("componentRows").querySelectorAll("[data-open-component]").forEach(button => {
+      button.addEventListener("click", () => showComponent(Number(button.dataset.openComponent)));
+    });
+  }
+
+  function renderComponentDetail(component) {
+    const project = currentProject();
+    const changes = componentChanges(component.id);
+    state.currentComponent = component;
+    $("home").style.display = "none";
+    $("detailView").classList.add("active");
+    $("detailCategory").textContent = `${project?.name || "Proyecto"} · ${componentType(component)}`;
+    $("detailName").textContent = component.name;
+    $("detailSubtitle").textContent = `${component.cadena} · Paso ${component.step}`;
+    $("detailId").textContent = `ID ${component.id}`;
+    $("detailGrid").innerHTML = [
+      ["Proyecto", project?.name],
+      ["Cadena", component.cadena],
+      ["Paso", component.step],
+      ["Tipo de fuente", component.source_type || "other"],
+      ["Referencia", component.source_reference || "Sin referencia"],
+      ["Cambios registrados", changes.length]
+    ].map(([label, value]) => `<div class="detail-cell"><div class="label">${escapeHtml(label)}</div><strong>${escapeHtml(value ?? "—")}</strong></div>`).join("");
+    $("detailDescription").textContent = component.description || "Sin descripción.";
+    $("historyCount").textContent = `(${changes.length})`;
+    $("historyList").innerHTML = changes.length
+      ? changes.map(renderChange).join("")
+      : '<div class="empty">Todavía no hay cambios registrados para este componente.</div>';
+    $("detailExamples").innerHTML = renderFiles(changes);
+    setDetailTab("componentDetailPane");
+    window.scrollTo({ top: 0, behavior: "smooth" });
+  }
+
+  async function showComponent(componentId) {
+    const component = currentProject()?.components.find(item => item.id === componentId);
+    if (!component) return;
+    state.selectedComponentId = componentId;
+    renderComponentDetail(component);
+  }
+
+  function renderChange(change) {
+    const ticket = change.ticket;
+    return `<article class="history-item">
+      <div><div class="history-version">#${escapeHtml(change.change_number)}</div><div class="history-date">${formatDate(change.created_at)}</div></div>
+      <div class="history-content">
+        <div class="history-ticket"><span class="history-ticket-label">Ticket</span>${ticketLink(ticket)}<span class="small muted">${escapeHtml(ticket.title)}</span></div>
+        <h3>${escapeHtml(change.title)}</h3>
+        <p class="history-desc">${escapeHtml(change.description)}</p>
+        <div class="small muted">${escapeHtml(change.cadena)} · Paso ${escapeHtml(change.step)}</div>
+        <button class="btn small edit-change-btn" type="button" data-edit-change="${change.id}">Editar cambio</button>
+      </div>
+    </article>`;
+  }
+
+  function renderFiles(changes) {
+    const files = changes.flatMap(change => (change.files || []).map(item => ({ ...item, change })));
+    if (!files.length) return '<p class="small muted">No hay archivos asociados a los cambios de este componente.</p>';
+    return `<div class="file-list">${files.map(item => {
+      const file = item.file;
+      const downloadUrl = `/projects/${item.change.project_id}/changes/${item.change.id}/files/${item.file_id}/download`;
+      return `<div class="file-row"><div><strong>${escapeHtml(file.original_name)}</strong><div class="small muted">${escapeHtml(item.role)} · ${escapeHtml(item.description)} · ${escapeHtml(file.type_file)}</div></div><a class="btn small" href="${API_BASE}${downloadUrl}" target="_blank" rel="noopener">Descargar</a></div>`;
+    }).join("")}</div>`;
+  }
+
+  function setDetailTab(activePane) {
+    document.querySelectorAll(".detail-pane").forEach(pane => pane.classList.toggle("active", pane.id === activePane));
+    document.querySelectorAll("[data-detail-tab]").forEach(button => {
+      const active = button.dataset.detailTab === activePane;
+      button.classList.toggle("active", active);
+      button.setAttribute("aria-selected", String(active));
+    });
+  }
+
+  function showHome() {
+    $("home").style.display = "";
+    $("detailView").classList.remove("active");
+    state.selectedComponentId = null;
+    window.scrollTo({ top: 0, behavior: "smooth" });
+  }
+
+  function initTheme() {
+    const savedTheme = localStorage.getItem("catalog-theme");
+    const prefersDark = window.matchMedia("(prefers-color-scheme: dark)").matches;
+    setTheme(savedTheme || (prefersDark ? "dark" : "light"));
+    $("themeToggle").addEventListener("click", () => {
+      const nextTheme = document.documentElement.dataset.theme === "dark" ? "light" : "dark";
+      localStorage.setItem("catalog-theme", nextTheme);
+      setTheme(nextTheme);
+    });
+  }
+
+  function setTheme(theme) {
+    document.documentElement.dataset.theme = theme;
+    const isDark = theme === "dark";
+    $("themeToggle").textContent = isDark ? "Modo claro" : "Modo nocturno";
+    $("themeToggle").setAttribute("aria-pressed", String(isDark));
+  }
+
+  function openDialog(title, fields, submitLabel = "Guardar", eyebrow = "Catálogo", mode = "") {
+    $("dialogEyebrow").textContent = eyebrow;
+    $("dialogTitle").textContent = title;
+    $("dialogFields").innerHTML = fields;
+    $("dialogSubmit").textContent = submitLabel;
+    $("entityForm").dataset.mode = mode;
+    $("entityForm").dataset.changeId = "";
+    $("entityDialog").showModal();
+  }
+
+  function closeDialog() {
+    $("entityDialog").close();
+    $("entityForm").reset();
+  }
+
+  function formField(label, name, options = {}) {
+    const { value = "", required = true, type = "text", maxLength = 1000, placeholder = "" } = options;
+    return `<label class="form-field">${escapeHtml(label)}<input name="${escapeHtml(name)}" type="${type}" value="${escapeHtml(value)}" ${required ? "required" : ""} maxlength="${maxLength}" placeholder="${escapeHtml(placeholder)}"></label>`;
+  }
+
+  function changeEntry(index, componentId = "") {
+    const components = currentProject()?.components || [];
+    return `<fieldset class="change-entry"><legend>Cambio ${index + 1}</legend>
+      <label class="form-field">Componente<select name="component_id" required><option value="">Selecciona componente</option>${components.map(component => `<option value="${component.id}" ${String(component.id) === String(componentId) ? "selected" : ""}>${escapeHtml(component.name)}</option>`).join("")}</select></label>
+      ${formField("Título del cambio", "change_title", { maxLength: 250 })}
+      <label class="form-field">Descripción<textarea name="change_description" required maxlength="1000" rows="3"></textarea></label>
+    </fieldset>`;
+  }
+
+  function addChangeEntryButton() {
+    return '<button class="btn small" type="button" id="addChangeEntry">＋ Otro cambio</button>';
+  }
+
+  $("createProjectBtn").addEventListener("click", () => {
+    openDialog("Crear proyecto", `<div class="form-grid">${formField("Nombre", "name", { maxLength: 150 })}<label class="form-field full">Descripción<textarea name="description" rows="3" required></textarea></label></div>`, "Guardar", "Catálogo", "project");
+  });
+
+  $("createComponentBtn").addEventListener("click", () => {
+    if (!currentProject()) return;
+    openDialog("Nuevo componente", `<div class="form-grid">
+      ${formField("Nombre", "name", { maxLength: 150 })}
+      ${formField("Cadena (método)", "cadena", { maxLength: 150, placeholder: "PRD" })}
+      ${formField("Paso", "step", { type: "number", value: 1 })}
+      ${formField("Tipo de fuente", "source_type", { value: "other", maxLength: 30 })}
+      ${formField("Referencia de fuente", "source_reference", { required: false })}
+      <label class="form-field full">Descripción<textarea name="description" rows="3" required></textarea></label>
+    </div>`, "Guardar", "Catálogo", "component");
+  });
+
+  $("createTicketBtn").addEventListener("click", () => {
+    if (!currentProject()) return;
+    openDialog("Registrar ticket y cambio", `<div class="form-grid">
+      ${formField("Clave del ticket", "ticket_key", { maxLength: 100, placeholder: "PAY-123" })}
+      ${formField("Título del ticket", "title", { maxLength: 250 })}
+      ${formField("URL del ticket", "ticket_url", { type: "url", maxLength: 500, placeholder: "https://…" })}
+      <label class="form-field full">Descripción<textarea name="description" rows="3" required maxlength="1000"></textarea></label>
+      <div id="changeEntries" class="form-field full">${changeEntry(0)}</div>
+      <div class="form-field full">${addChangeEntryButton()}</div>
+    </div>`, "Registrar", "Catálogo", "ticket");
+  });
+
+  $("addChangeBtn").addEventListener("click", () => {
+    const tickets = projectTickets();
+    if (!tickets.length) {
+      showToast("Crea un ticket antes de agregar cambios.", true);
+      return;
+    }
+    openDialog("Agregar cambio a ticket", `<div class="form-grid">
+      <label class="form-field full">Ticket<select name="ticket_id" required><option value="">Selecciona ticket</option>${tickets.map(ticket => `<option value="${ticket.id}">${escapeHtml(ticket.ticket_key)} · ${escapeHtml(ticket.title)}</option>`).join("")}</select></label>
+      <div id="changeEntries" class="form-field full">${changeEntry(0, state.selectedComponentId)}</div>
+      <div class="form-field full">${addChangeEntryButton()}</div>
+    </div>`, "Agregar", "Catálogo", "add-changes");
+  });
+
+  $("dialogFields").addEventListener("click", event => {
+    if (event.target.id !== "addChangeEntry") return;
+    const container = $("changeEntries");
+    const count = container.querySelectorAll(".change-entry").length;
+    container.insertAdjacentHTML("beforeend", changeEntry(count, state.selectedComponentId));
+  });
+
+  $("dialogClose").addEventListener("click", closeDialog);
+  $("dialogCancel").addEventListener("click", closeDialog);
+  $("entityDialog").addEventListener("click", event => {
+    if (event.target === $("entityDialog")) closeDialog();
+  });
+
+  $("entityForm").addEventListener("submit", async event => {
+    event.preventDefault();
+    const submit = $("dialogSubmit");
+    submit.disabled = true;
+    try {
+      const form = new FormData(event.currentTarget);
+      const entries = [...$("dialogFields").querySelectorAll(".change-entry")].map(entry => ({
+        component_id: Number(entry.querySelector('[name="component_id"]').value),
+        title: entry.querySelector('[name="change_title"]').value.trim(),
+        description: entry.querySelector('[name="change_description"]').value.trim()
+      }));
+      const projectId = Number(state.selectedProjectId);
+      const hasChangeEntries = entries.length > 0;
+      const mode = event.currentTarget.dataset.mode;
+      if (mode === "edit-change") {
+        await api(`/change/${event.currentTarget.dataset.changeId}`, {
+          method: "PATCH",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            component_id: Number(form.get("component_id")),
+            title: form.get("title"),
+            description: form.get("description")
+          })
+        });
+        showToast("Cambio actualizado.");
+      } else if (mode === "add-changes") {
+        await api(`/tickets/${Number(form.get("ticket_id"))}`, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify(entries)
+        });
+        showToast("Cambios agregados al ticket.");
+      } else if (mode === "ticket" && hasChangeEntries) {
+        await api(`/projects/${projectId}/tickets`, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            ticket_key: form.get("ticket_key"),
+            title: form.get("title"),
+            description: form.get("description"),
+            ticket_url: form.get("ticket_url"),
+            changes: entries
+          })
+        });
+        showToast("Ticket y cambio registrados.");
+      } else if (mode === "project") {
+        await api("/projects", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ name: form.get("name"), description: form.get("description") })
+        });
+        showToast("Proyecto creado.");
+      } else if (mode === "component") {
+        await api(`/projects/${projectId}/components`, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            name: form.get("name"),
+            description: form.get("description"),
+            cadena: form.get("cadena"),
+            step: Number(form.get("step")),
+            source_type: form.get("source_type"),
+            source_reference: form.get("source_reference") || null
+          })
+        });
+        showToast("Componente creado.");
+      }
+      closeDialog();
+      await loadCatalog();
+      if (state.selectedComponentId) await showComponent(state.selectedComponentId);
+    } catch (error) {
+      showToast(error.message, true);
+    } finally {
+      submit.disabled = false;
+    }
+  });
+
+  $("historyList").addEventListener("click", event => {
+    const button = event.target.closest("[data-edit-change]");
+    if (!button) return;
+    const change = componentChanges(state.selectedComponentId).find(item => item.id === Number(button.dataset.editChange));
+    if (!change) return;
+    openDialog("Editar cambio", `<div class="form-grid">
+      <label class="form-field full">Componente<select name="component_id" required>${(currentProject()?.components || []).map(component => `<option value="${component.id}" ${component.id === change.component_id ? "selected" : ""}>${escapeHtml(component.name)}</option>`).join("")}</select></label>
+      ${formField("Título", "title", { value: change.title, maxLength: 250 })}
+      <label class="form-field full">Descripción<textarea name="description" rows="3" required maxlength="1000">${escapeHtml(change.description)}</textarea></label>
+    </div>`, "Guardar", "Historial", "edit-change");
+    $("entityForm").dataset.changeId = String(change.id);
+  });
+
+  $("projectFilter").addEventListener("change", async event => {
+    state.selectedProjectId = event.target.value;
+    state.selectedCategory = "";
+    $("projectDescription").textContent = currentProject()?.description || "";
+    renderProjectOptions();
     renderCategories();
-    renderRows();
-  }));
-}
-function renderRows() {
-  const project = $('projectFilter').value, cat = selectedCategory;
-  const hasProject = Boolean(project);
-  $('projectElementsView').hidden = !hasProject;
-  $('projectSelectionPrompt').hidden = hasProject;
-  const categoryOrder = ["PC1", "Reporte", "Carrier"];
-  const list = CATALOG.filter(c => {
-    return hasProject && c.project === project && (!cat || c.category === cat);
-  })
-    .sort((a, b) => projects.indexOf(a.project) - projects.indexOf(b.project) || categoryOrder.indexOf(a.category) - categoryOrder.indexOf(b.category) || a.name.localeCompare(b.name));
-  let lastGroup = "";
-  $('componentRows').innerHTML = list.map(c => {
-    const group = `${c.project} · ${c.category}`;
-    const heading = group === lastGroup ? "" : `<tr class="group-row"><th colspan="5">${escapeHtml(group)}</th></tr>`;
-    lastGroup = group;
-    const subline = [c.id, c.reportFormat, c.category === "Carrier" ? `Design ${c.scope.split(" ").pop()}` : ""].filter(Boolean).join(" · ");
-    return `${heading}<tr>
- <td><a href="#" class="component-name" data-open="${escapeHtml(c.id)}">${escapeHtml(c.name)}</a><div class="subline">${escapeHtml(subline)}</div></td>
- <td>${escapeHtml(c.project)}</td><td>${escapeHtml(c.category)}</td><td><strong>${escapeHtml(latestRecorded(c))}</strong></td>
- <td><button class="btn view-button" data-open="${escapeHtml(c.id)}">Ver</button></td></tr>`;
-  }).join('');
-  $('emptyState').hidden = list.length !== 0;
-  document.querySelectorAll('[data-open]').forEach(b => b.addEventListener('click', e => { e.preventDefault(); showDetail(b.dataset.open) }));
-}
-function renderExamples(c) {
-  if (c.variants?.length) {
-    const files = [
-      { label: "RichPDFPackage", name: c.packageFile.split("/").pop(), path: c.packageFile },
-      ...c.variants.map(variant => ({ label: variant.name, name: variant.fileName, path: variant.file }))
-    ];
-    return renderFileList(files, true);
-  }
-  if (c.reportFiles) {
-    return renderFileList([...c.reportFiles, ...c.exampleFiles], true);
-  }
-  const artifacts = c.rptFile ? `<div class="report-artifacts"><strong>Archivo Crystal Reports (.rpt):</strong> ${escapeHtml(c.rptFile)} <span class="missing-file">Pendiente de agregar</span><br><strong>SP:</strong> ${escapeHtml(c.storedProcedure)} <span class="missing-file">Pendiente de agregar</span></div>` : "";
-  const files = [{ label: c.example.format, name: c.example.name, preview: c.example.content }];
-  return `${artifacts}${c.layout ? `<div class="report-layout"><strong>Layout</strong><p>${escapeHtml(c.layout)}</p></div>` : ""}${renderFileList(files, true)}`;
-}
-function renderFilePreview(file) {
-  const extension = file.name.split(".").pop().toLowerCase();
-  if (["rpt", "pkg3", "pgk3"].includes(extension)) return "";
+    renderComponents();
+    if (currentProject() && !state.ticketsByProject.has(state.selectedProjectId)) {
+      try {
+        const tickets = await api(`/projects/${state.selectedProjectId}/tickets`);
+        state.ticketsByProject.set(state.selectedProjectId, tickets);
+        renderStats();
+        renderComponents();
+      } catch (error) {
+        showToast(error.message, true);
+      }
+    }
+  });
+  $("componentSearch").addEventListener("input", renderComponents);
+  $("backBtn").addEventListener("click", showHome);
+  document.querySelectorAll("[data-detail-tab]").forEach(button =>
+    button.addEventListener("click", () => setDetailTab(button.dataset.detailTab))
+  );
 
-  if (extension === "pdf") {
-    const path = escapeHtml(encodeURI(file.path));
-    return `<details class="file-preview">
-      <summary>Previsualizar PDF</summary>
-      <iframe src="${path}" title="Vista previa de ${escapeHtml(file.name)}" loading="lazy"></iframe>
-    </details>`;
-  }
+  $("uploadFileBtn").addEventListener("click", () => $("fileInput").click());
+  $("fileInput").addEventListener("change", async event => {
+    const files = [...event.target.files];
+    const component = state.currentComponent;
+    const project = currentProject();
+    if (!files.length || !component || !project) return;
+    const changes = componentChanges(component.id);
+    const selectedChange = changes[0];
+    if (!selectedChange) {
+      showToast("Registra un cambio antes de adjuntar archivos.", true);
+      event.target.value = "";
+      return;
+    }
+    const formData = new FormData();
+    files.forEach(file => formData.append("files", file));
+    formData.append("metadata", JSON.stringify(files.map(file => ({
+      type_file: file.name.split(".").pop().slice(0, 30) || "other",
+      role: "attachment",
+      description: file.name
+    }))));
+    try {
+      await api(`/projects/${project.id}/changes/${selectedChange.id}/files/uploadfiles`, {
+        method: "POST",
+        body: formData
+      });
+      showToast(`${files.length} archivo(s) adjuntado(s).`);
+      await loadCatalog();
+      await showComponent(component.id);
+    } catch (error) {
+      showToast(error.message, true);
+    } finally {
+      event.target.value = "";
+    }
+  });
 
-  if (!file.preview) return "";
-  return `<details class="file-preview">
-    <summary>Previsualizar archivo</summary>
-    <pre class="sample">${escapeHtml(file.preview)}${file.previewTruncated ? "\n\n… Vista parcial. Abre el archivo para ver el contenido completo." : ""}</pre>
-  </details>`;
-}
-function showHome() { $('home').style.display = ''; $('detailView').classList.remove('active'); window.scrollTo({ top: 0, behavior: 'smooth' }) }
-function showDetail(id) {
-  const c = CATALOG.find(x => x.id === id); if (!c) return;
-  setDetailTab('componentDetailPane');
-  $('home').style.display = 'none'; $('detailView').classList.add('active');
-  $('detailCategory').textContent = `${c.project} · ${c.category}${c.reportFormat ? ` · ${c.reportFormat}` : ""}`;
-  $('detailName').textContent = c.name;
-  $('detailSubtitle').textContent = [c.id, c.carrier].filter(Boolean).join(' · ');
-  $('detailId').textContent = c.id;
-  const newest = latestRecorded(c), approved = approvedVersion(c);
-  $('detailGrid').innerHTML = `<div class="detail-cell chain-card">
-    <div class="chain-card-item">
-      <div class="label">Chain</div>
-      <strong>${escapeHtml(c.chain.name)}</strong>
-    </div>
-    <div class="chain-card-item">
-      <div class="label">Step</div>
-      <strong>${escapeHtml(c.chain.step)}</strong>
-    </div>
-  </div>` + [
-    ['Proyecto', c.project],
-    ...(c.packageFile ? [['Archivo PKG3', c.packageFile.split("/").pop()]] : []),
-    ...(c.reportFormat ? [['Formato', c.reportFormat]] : []),
-    ['Última versión registrada', newest],
-    ['Última actualización', dateLabel(c.lastUpdated)]
-  ].map(([a, b]) => `<div class="detail-cell"><div class="label">${escapeHtml(a)}</div><strong>${escapeHtml(b)}</strong></div>`).join('');
-  $('detailDescription').textContent = c.description;
-  $('detailExamples').innerHTML = renderExamples(c);
-  $('detailLinks').innerHTML = c.ticketUrl ? `<a class="btn" href="${escapeHtml(c.ticketUrl)}" target="_blank" rel="noopener">Abrir ticket ↗</a>` : "";
-  $('historyCount').textContent = `(${c.versions.length})`;
-  $('historyList').innerHTML = [...c.versions].sort((a, b) => b.recordedDate.localeCompare(a.recordedDate)).map(v => `<article class="history-item">
- <div><div class="history-version">${escapeHtml(v.version)}</div><div class="history-date">${dateLabel(v.recordedDate)}</div></div>
- <div class="history-content">
- <div class="history-ticket"><span class="history-ticket-label">Ticket: </span><a class="history-ticket-link" href="${escapeHtml(v.ticketUrl || '#')}" target="_blank" rel="noopener">${escapeHtml(v.ticketType)} - ${escapeHtml(v.ticketName)}</a></div>
- <div class="history-desc"><strong>Cambio:</strong> ${escapeHtml(v.change)}</div>
- <article class="history-snapshot">
-   <div class="example-heading"><strong>${escapeHtml(c.name)} · Ejemplo de versión ${escapeHtml(v.version)}</strong><span class="small muted">${escapeHtml(c.category)}</span></div>
-   ${v.previewAfter ? `<div class="change-preview">
-     ${v.previewBefore ? `<div class="change-side before"><div class="change-label">Antes</div><pre class="sample">${renderComparedLines(v.previewBefore, v.previewAfter, 'removed', c.category === "Reporte" ? "cs" : "")}</pre></div>` : ''}
-     <div class="change-side after"><div class="change-label">${v.previewBefore ? 'Después' : 'Muestra de esta versión'}</div><pre class="sample">${v.previewBefore ? renderComparedLines(v.previewAfter, v.previewBefore, 'added', c.category === "Reporte" ? "cs" : "") : highlightText(v.previewAfter, c.category === "Reporte" ? "cs" : "")}</pre></div>
-   </div><div class="demo-label">Previsualización de cambio simulada</div>` : ''}
-   ${renderHistoryFiles(v.historyFiles)}
- </article>
- <div class="small muted"></div>${v.notes ? `<div class="small muted">${escapeHtml(v.notes)}</div>` : ''}</div></article>`).join('');
-  window.scrollTo({ top: 0, behavior: 'smooth' });
-}
-init();
+  $("apiBaseLabel").textContent = `API: ${API_BASE}`;
+  initTheme();
+  loadCatalog();
+})();

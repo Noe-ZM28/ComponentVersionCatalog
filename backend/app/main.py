@@ -1,5 +1,6 @@
 from fastapi import FastAPI, Depends, HTTPException, File, UploadFile, Form
-from fastapi.responses import HTMLResponse, FileResponse
+from fastapi.responses import FileResponse
+from fastapi.staticfiles import StaticFiles
 
 from sqlalchemy import select, func
 from sqlalchemy.orm import Session, selectinload
@@ -27,12 +28,25 @@ from typing import Annotated
 import json
 
 import os
+from pathlib import Path
 
 
 app = FastAPI(
     title=settings.app_name,
     description="API para administrar proyectos, componentes e historial de cambios.",
     version="0.1.0",
+)
+
+REPOSITORY_ROOT = Path(__file__).resolve().parents[2]
+app.mount(
+    "/css",
+    StaticFiles(directory=REPOSITORY_ROOT / "css"),
+    name="frontend-css",
+)
+app.mount(
+    "/js",
+    StaticFiles(directory=REPOSITORY_ROOT / "js"),
+    name="frontend-js",
 )
 
 
@@ -62,9 +76,7 @@ def seed_demo_catalog(db: Session = Depends(get_db)):
     
 @app.get("/")
 def root():
-    return{
-        "message": "Bienvenido a la API de Component Version Catalog",
-    }
+    return FileResponse(REPOSITORY_ROOT / "index.html")
 
 @app.get("/hello")
 def hello():
@@ -601,7 +613,6 @@ def download(
         media_type=file.content_type,
         filename=file.original_name
     )
-
 
 
 

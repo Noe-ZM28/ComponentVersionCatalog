@@ -1250,3 +1250,279 @@ W
         grid-template-columns: 72px minmax(0, 1fr)
     }
 }
+
+.brand {
+    color: inherit;
+    text-decoration: none
+}
+
+.topbar-actions,
+.page-heading,
+.detail-title-row {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 16px
+}
+
+.topbar-actions {
+    justify-content: flex-end
+}
+
+.connection-status {
+    border: 1px solid rgba(255, 255, 255, .4);
+    border-radius: 999px;
+    padding: 5px 10px;
+    color: #d7ffe8;
+    font-size: 12px;
+    font-weight: 700
+}
+
+.connection-status::before {
+    content: "";
+    display: inline-block;
+    width: 7px;
+    height: 7px;
+    margin-right: 7px;
+    border-radius: 50%;
+    background: #49d489
+}
+
+.connection-status.offline {
+    color: #ffe1dc
+}
+
+.connection-status.offline::before {
+    background: #ff887b
+}
+
+.page-heading {
+    margin-bottom: 20px
+}
+
+.page-heading h1 {
+    margin-bottom: 5px
+}
+
+.page-heading .intro {
+    margin-bottom: 0
+}
+
+.catalog-filters .panel {
+    min-width: 0
+}
+
+.catalog-filters .panel > .btn {
+    margin: 12px 6px 0 0
+}
+
+.text-button {
+    border: 0;
+    padding: 0;
+    background: transparent;
+    text-align: left;
+    cursor: pointer
+}
+
+.detail-title-row {
+    align-items: flex-start
+}
+
+.detail-title-row h1 {
+    overflow-wrap: anywhere
+}
+
+.history-item .history-content h3 {
+    margin-top: 10px
+}
+
+.history-desc {
+    margin: 5px 0 10px;
+    color: var(--muted);
+    overflow-wrap: anywhere
+}
+
+.edit-change-btn {
+    margin-top: 10px
+}
+
+.file-list {
+    display: grid;
+    gap: 9px
+}
+
+.file-row {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 14px;
+    padding: 12px;
+    border: 1px solid var(--line);
+    border-radius: 9px;
+    background: var(--panel)
+}
+
+.file-row > div {
+    min-width: 0;
+    overflow-wrap: anywhere
+}
+
+.entity-dialog {
+    width: min(680px, calc(100vw - 28px));
+    max-height: min(88vh, 900px);
+    overflow: auto;
+    padding: 0;
+    border: 1px solid var(--line);
+    border-radius: 14px;
+    background: var(--panel);
+    color: var(--text);
+    box-shadow: 0 20px 70px rgba(0, 0, 0, .3)
+}
+
+.entity-dialog::backdrop {
+    background: rgba(8, 15, 27, .58);
+    backdrop-filter: blur(2px)
+}
+
+.entity-dialog form {
+    padding: 22px
+}
+
+.entity-dialog .section-head {
+    margin-bottom: 20px
+}
+
+.entity-dialog h2 {
+    margin: 4px 0 0
+}
+
+.icon-button {
+    width: 36px;
+    height: 36px;
+    border: 1px solid var(--line);
+    border-radius: 8px;
+    background: var(--panel);
+    color: var(--text);
+    font-size: 22px
+}
+
+.form-grid {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 13px
+}
+
+.form-field {
+    display: grid;
+    align-content: start;
+    gap: 6px;
+    min-width: 0;
+    color: var(--text);
+    font-size: 13px;
+    font-weight: 700
+}
+
+.form-field.full {
+    grid-column: 1 / -1
+}
+
+.form-field input,
+.form-field select,
+.form-field textarea {
+    width: 100%;
+    min-width: 0;
+    padding: 10px 11px;
+    border: 1px solid var(--line);
+    border-radius: 8px;
+    background: var(--panel);
+    color: var(--text);
+    font: inherit;
+    font-weight: 400
+}
+
+.form-field textarea {
+    resize: vertical
+}
+
+.change-entry {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 12px;
+    min-width: 0;
+    margin: 0 0 12px;
+    padding: 14px;
+    border: 1px solid var(--line);
+    border-radius: 9px
+}
+
+.change-entry legend {
+    padding: 0 6px;
+    color: var(--blue);
+    font-size: 12px;
+    font-weight: 750
+}
+
+.dialog-actions {
+    display: flex;
+    justify-content: flex-end;
+    gap: 9px;
+    margin-top: 20px;
+    padding-top: 15px;
+    border-top: 1px solid var(--line)
+}
+
+.btn:disabled {
+    opacity: .55;
+    cursor: not-allowed
+}
+
+.toast {
+    display: block;
+    z-index: 20;
+    max-width: min(480px, calc(100vw - 44px));
+    opacity: 0;
+    pointer-events: none;
+    transform: translateY(8px);
+    transition: opacity .16s ease, transform .16s ease
+}
+
+.toast.visible {
+    opacity: 1;
+    transform: translateY(0)
+}
+
+.toast.error {
+    border: 1px solid var(--red);
+    color: var(--red)
+}
+
+[hidden] {
+    display: none !important
+}
+
+@media (max-width: 760px) {
+    .page-heading,
+    .detail-title-row {
+        align-items: stretch;
+        flex-direction: column
+    }
+
+    .topbar-actions {
+        flex-wrap: wrap
+    }
+
+    .connection-status {
+        display: none
+    }
+
+    .form-grid,
+    .change-entry {
+        grid-template-columns: 1fr
+    }
+
+    .file-row,
+    .footer {
+        align-items: flex-start;
+        flex-direction: column
+    }
+}

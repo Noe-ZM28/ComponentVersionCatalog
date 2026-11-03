@@ -1,111 +1,115 @@
 <!doctype html>
 <html lang="es">
-
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="theme-color" content="#172b4d">
   <title>Component Version Catalog</title>
-  <link rel="stylesheet" href="css/styles.css">
+  <link rel="stylesheet" href="/css/styles.css">
 </head>
-
 <body>
   <div class="app">
     <header class="topbar">
-      <div class="brand">
-        <div class="brandmark">VC</div>
-        <div>Component Version Catalog<div class="topmeta">Internal reference · Prototype</div>
-        </div>
+      <a class="brand" href="/" aria-label="Component Version Catalog, inicio">
+        <span class="brandmark">VC</span>
+        <span>Component Version Catalog<span class="topmeta">Catálogo interno de componentes</span></span>
+      </a>
+      <div class="topbar-actions">
+        <span id="connectionStatus" class="connection-status" role="status">Conectando…</span>
+        <button class="theme-toggle" id="themeToggle" type="button" aria-pressed="false">Modo nocturno</button>
       </div>
-      <button class="theme-toggle" id="themeToggle" type="button" aria-pressed="false">Modo nocturno</button>
     </header>
+
     <main class="wrap">
       <section id="home">
-        <div class="eyebrow">Catálogo de configuración</div>
-        <h1>Catálogo por proyecto</h1>
-        <p class="intro">Consulta PC1, reportes con layout y ejemplos, y paquetes de carriers con sus variantes.</p>
+        <div class="page-heading">
+          <div>
+            <div class="eyebrow">Catálogo de configuración</div>
+            <h1>Catálogo por proyecto</h1>
+            <p class="intro">Consulta proyectos, componentes y el historial de cambios registrado por el equipo.</p>
+          </div>
+          <button class="btn primary" id="createProjectBtn" type="button">＋ Nuevo proyecto</button>
+        </div>
+
+        <div id="globalMessage" class="notice" role="alert" hidden></div>
+        <div class="stats" aria-label="Resumen del catálogo">
+          <article class="stat"><div class="stat-label">Proyectos</div><div class="stat-number" id="projectCount">—</div><div class="stat-note">Registrados en la base</div></article>
+          <article class="stat"><div class="stat-label">Componentes</div><div class="stat-number" id="componentCount">—</div><div class="stat-note">En todos los proyectos</div></article>
+          <article class="stat"><div class="stat-label">Tickets</div><div class="stat-number" id="ticketCount">—</div><div class="stat-note">Cambios vinculados</div></article>
+          <article class="stat"><div class="stat-label">Cambios</div><div class="stat-number" id="changeCount">—</div><div class="stat-note">Historial registrado</div></article>
+        </div>
+
         <div class="catalog-filters">
           <section class="panel">
-            <label class="filter-label" for="projectFilter">Proyectos</label>
-            <select id="projectFilter" class="project-select" aria-label="Filtrar por proyecto">
+            <label class="filter-label" for="projectFilter">Proyecto</label>
+            <select id="projectFilter" class="project-select" aria-label="Selecciona un proyecto">
               <option value="">Selecciona un proyecto</option>
             </select>
+            <p id="projectDescription" class="small muted"></p>
+            <button class="btn" id="createComponentBtn" type="button" disabled>＋ Nuevo componente</button>
+            <button class="btn" id="createTicketBtn" type="button" disabled>＋ Registrar ticket</button>
           </section>
           <section class="panel">
-            <h2>Componentes</h2>
-            <p id="categoryPrompt" class="category-prompt"></p>
+            <h2>Tipo de componente</h2>
+            <p class="category-prompt">Filtra los elementos del proyecto seleccionado.</p>
             <div class="category-grid" id="categoryCards"></div>
           </section>
         </div>
-        <p id="projectSelectionPrompt" class="project-selection-prompt">Selecciona un proyecto primero para ver sus elementos.</p>
+
+        <p id="projectSelectionPrompt" class="project-selection-prompt">Selecciona un proyecto para consultar sus componentes.</p>
         <div class="layout" id="projectElementsView" hidden>
           <section class="panel">
             <div class="section-head">
-              <div>
-                <h2>Elementos del proyecto</h2>
-              </div>
+              <div><h2>Componentes</h2><p class="small muted" id="componentSummary"></p></div>
+              <label class="search" for="componentSearch"><span aria-hidden="true">⌕</span><input id="componentSearch" type="search" placeholder="Buscar por nombre o cadena…" autocomplete="off"></label>
             </div>
             <div class="table-wrap">
               <table>
-                <thead>
-                  <tr>
-                    <th>Nombre del elemento</th>
-                    <th>Proyecto</th>
-                    <th>Tipo</th>
-                    <th>Última registrada</th>
-                    <th></th>
-                  </tr>
-                </thead>
+                <thead><tr><th>Componente</th><th>Cadena / paso</th><th>Tipo</th><th>Cambios</th><th></th></tr></thead>
                 <tbody id="componentRows"></tbody>
               </table>
             </div>
-            <div class="empty" id="emptyState" hidden>No hay elementos para estos filtros.</div>
+            <div class="empty" id="emptyState" hidden>No hay componentes que coincidan con los filtros.</div>
           </section>
         </div>
       </section>
-      <section id="detailView" class="detail">
-        <button class="btn back" id="backBtn">← Volver al catálogo</button>
+
+      <section id="detailView" class="detail" aria-labelledby="detailName">
+        <button class="btn back" id="backBtn" type="button">← Volver al catálogo</button>
         <div class="eyebrow" id="detailCategory"></div>
-        <div class="section-head">
-          <div>
-            <h1 id="detailName"></h1>
-            <div class="muted" id="detailSubtitle"></div>
-          </div>
+        <div class="section-head detail-title-row">
+          <div><h1 id="detailName"></h1><div class="muted" id="detailSubtitle"></div></div>
+          <button class="btn primary" id="addChangeBtn" type="button">＋ Agregar cambio</button>
         </div>
-        <nav class="detail-tabs" role="tablist" aria-label="Vistas del elemento">
+        <nav class="detail-tabs" role="tablist" aria-label="Vistas del componente">
           <button id="detailTab" class="detail-tab active" type="button" role="tab" aria-controls="componentDetailPane" data-detail-tab="componentDetailPane" aria-selected="true">Detalle</button>
-          <button id="historyTab" class="detail-tab" type="button" role="tab" aria-controls="historyPane" data-detail-tab="historyPane" aria-selected="false">Histórico <span id="historyCount"></span></button>
+          <button id="historyTab" class="detail-tab" type="button" role="tab" aria-controls="historyPane" data-detail-tab="historyPane" aria-selected="false">Historial <span id="historyCount"></span></button>
         </nav>
         <section id="componentDetailPane" class="detail-pane active" role="tabpanel" aria-labelledby="detailTab">
           <div class="panel">
-            <div class="section-head">
-              <h2>Detalle del elemento</h2><span class="small muted" id="detailId"></span>
-            </div>
+            <div class="section-head"><h2>Información del componente</h2><span class="small muted" id="detailId"></span></div>
             <div class="detail-grid" id="detailGrid"></div>
             <div id="detailDescription" class="detail-description"></div>
-            <section class="examples">
-              <h2>Archivos del reporte</h2>
-              <div id="detailExamples"></div>
-            </section>
-            <div class="tagline" id="detailLinks"></div>
-            <div class="source-box">
-            </div>
+            <section class="examples"><div class="section-head"><h2>Archivos asociados</h2><button class="btn small" id="uploadFileBtn" type="button">＋ Adjuntar archivo</button></div><div id="detailExamples"></div></section>
           </div>
         </section>
         <section id="historyPane" class="detail-pane" role="tabpanel" aria-labelledby="historyTab">
-          <div class="panel">
-            <div class="section-head">
-              <h2>Histórico de cambios</h2>
-            </div>
-            <div id="historyList"></div>
-          </div>
+          <div class="panel"><div class="section-head"><div><h2>Historial de cambios</h2><p class="small muted">Cambios asociados a tickets de este proyecto.</p></div></div><div id="historyList"></div></div>
         </section>
       </section>
-      <footer class="footer"><span>Catálogo por proyecto · Prototipo v0.1</span></footer>
+      <footer class="footer"><span>Component Version Catalog · Backend conectado</span><span id="apiBaseLabel"></span></footer>
     </main>
-    <div class="toast" id="toast"></div>
-  </div>
-  <script src="js/data.js"></script>
-  <script src="js/app.js"></script>
-</body>
 
+    <dialog id="entityDialog" class="entity-dialog">
+      <form id="entityForm" method="dialog">
+        <div class="section-head"><div><div class="eyebrow" id="dialogEyebrow">Catálogo</div><h2 id="dialogTitle"></h2></div><button class="icon-button" type="button" id="dialogClose" aria-label="Cerrar">×</button></div>
+        <div id="dialogFields"></div>
+        <div class="dialog-actions"><button class="btn" id="dialogCancel" type="button">Cancelar</button><button class="btn primary" id="dialogSubmit" type="submit">Guardar</button></div>
+      </form>
+    </dialog>
+    <input id="fileInput" type="file" multiple hidden>
+    <div class="toast" id="toast" role="status" aria-live="polite"></div>
+  </div>
+  <script src="/js/app.js" defer></script>
+</body>
 </html>

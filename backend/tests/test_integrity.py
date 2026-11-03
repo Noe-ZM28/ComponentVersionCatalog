@@ -97,6 +97,10 @@ def test_demo_seed_keeps_foreign_keys_chains_steps_and_change_numbers_valid(db_s
     result = seed_catalog(db_session)
 
     assert 1 <= result["generated_changes"] <= 15
+    seeded_projects = db_session.scalars(select(Project)).all()
+    assert seeded_projects
+    assert all(project.name not in {"Proyecto 1", "Proyecto 2"} for project in seeded_projects)
+
     invalid_changes = db_session.scalar(
         select(func.count())
         .select_from(Change)
