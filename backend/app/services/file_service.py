@@ -59,8 +59,13 @@ def sha256_of(path: Path) -> str:
             h.update(chunk)
     return h.hexdigest()
 
-def get_file_path(project_id: int, filename: str):
-    return Path.joinpath(settings.storage_path, str(project_id), filename)
+def get_file_path(project_id: int, filename: str) -> Path:
+    file_path = Path(settings.storage_path) / str(project_id) / filename
 
+    if not file_path.exists() or not file_path.is_file():
+        raise HTTPException(
+            status_code=404,
+            detail="El archivo físico no existe."
+        )
 
-
+    return file_path

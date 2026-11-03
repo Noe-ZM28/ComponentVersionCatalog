@@ -1,5 +1,5 @@
 from fastapi import FastAPI, Depends, HTTPException, File, UploadFile, Form
-from fastapi.responses import HTMLResponse
+from fastapi.responses import HTMLResponse, FileResponse
 
 from sqlalchemy import select, func
 from sqlalchemy.orm import Session, selectinload
@@ -438,7 +438,7 @@ async def upload_files(
             status_code=404,
             detail="No existe un cambio con ese ID en el proyecto."
         )
-    
+
     try:
         metadata_data = json.loads(metadata)
     except json.JSONDecodeError:
@@ -536,6 +536,63 @@ async def upload_files(
             for cf in uploaded_files
         ]
     }
+
+@app.get("/projects/{project_id}/changes/{change_id}/files/{file_id}/download", response_class=FileResponse)
+def download(
+    project_id: int,
+    change_id: int,
+    file_id: int,
+    db: Session = Depends(get_db)
+):
+    # Comprobar que existe el proyecto
+    project = db.query(Project).filter(Project.id == project_id).first()
+
+    if not project:
+        raise HTTPException(
+            status_code=404,
+            detail="No existe un proyecto con ese ID."
+        )
+
+    # Comprobar que el cambio pertenece al proyecto
+    change = db.query(Change).filter(
+        Change.id == change_id,
+        Change.project_id == project_id
+    ).first()
+
+    if not change:
+        raise HTTPException(
+            status_code=404,
+            detail="No existe un cambio con ese ID en el proyecto."
+        )
+
+    # Comprobar que el archivo está asociado al cambio
+    file = (
+        db.query(FileRecord)
+        .join(ChangeFile, FileRecord.id == ChangeFile.file_id)
+        .filter(
+            ChangeFile.change_id == change_id,
+            FileRecord.id == file_id
+        )
+        .first()
+    )
+
+    if not file:
+        raise HTTPException(
+            status_code=404,
+            detail="El archivo no está asociado a este cambio."
+        )
+
+    # Obtener la ruta física
+    file_path = get_file_path(project_id, file.stored_name)
+
+    # Entregar el archivo al cliente
+    return FileResponse(
+        path=file_path,
+        media_type=file.content_type,
+        filename=file.original_name
+    )
+
+
 
 
 
