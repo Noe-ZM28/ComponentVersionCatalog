@@ -161,7 +161,9 @@ def create_component(
         name=component_data.name,
         description=component_data.description,
         cadena=component_data.cadena,
-        step=component_data.step
+        step=component_data.step,
+        source_type=component_data.source_type,
+        source_reference=component_data.source_reference,
     )
 
     project.components.append(new_component)
@@ -192,6 +194,7 @@ def create_ticket(
         )
 
     changes = []
+    next_numbers = {}
     for change in ticket_data.changes:
         component = db.query(Component).filter(
             Component.project_id == project_id,
@@ -203,12 +206,19 @@ def create_ticket(
                 detail=f"No existe un componente con el ID '{change.component_id}' en el proyecto {project.name}."
             )
 
-        max_change_number = db.query(func.max(Change.change_number)).filter(Change.component_id == component.id).scalar()
+        if component.id in next_numbers:
+            change_number = next_numbers[component.id]
+        else:
+            max_change_number = db.query(func.max(Change.change_number)).filter(
+                Change.component_id == component.id
+            ).scalar()
+            change_number = max_change_number + 1 if max_change_number is not None else 1
 
+        next_numbers[component.id] = change_number + 1
         new_change = Change(
             project_id=project_id,
             component_id=component.id,
-            change_number=max_change_number + 1 if max_change_number is not None else 1,
+            change_number=change_number,
             title=change.title,
             description=change.description,
             cadena=component.cadena,
@@ -591,7 +601,6 @@ def download(
         media_type=file.content_type,
         filename=file.original_name
     )
-
 
 
 

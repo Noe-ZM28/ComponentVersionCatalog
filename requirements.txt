@@ -5,3 +5,6 @@ alembic
 pydantic-settings
 python-multipart
 aiofiles
+
+pytest
+httpx2
