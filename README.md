@@ -7,16 +7,17 @@ A browser-based front end for consulting projects, components, tickets, change h
 
 ## Run locally
 1. Install the backend requirements: `python -m pip install -r requirements.txt`.
-2. Start the API and front end from the repository root: `python -m uvicorn app.main:app --app-dir backend --reload`.
-3. Open `http://127.0.0.1:8000/`. The interface and API share an origin; interactive catalog actions require the backend to be running.
-4. Create projects, components, tickets and changes, inspect component history, and attach/download files. The theme preference is saved in the browser.
+2. Initialize or update the database schema from the backend directory: `cd backend` then `python -m app.init_db`.
+3. Return to the repository root and start the API and front end: `python -m uvicorn app.main:app --app-dir backend --reload`.
+4. Open `http://127.0.0.1:8000/`. The interface and API share an origin; interactive catalog actions require the backend to be running.
+5. Create projects, components, tickets and changes, inspect component history, and attach/download files. The theme preference is saved in the browser.
 
 The front end uses plain HTML, CSS and JavaScript. To point it at another API origin, define `window.CVC_API_BASE` before loading `js/app.js`.
 
 ## Funciones
 - Resumen de proyectos, componentes, tickets y cambios.
 - Filtros por proyecto/tipo, búsqueda y detalle con historial de cambios.
-- Alta de proyectos, componentes y tickets; registro de varios cambios en un ticket; edición de cambios.
+- Alta de proyectos, componentes (con RefID) y tickets; registro de varios cambios en un ticket; edición de cambios.
 - Adjuntar archivos al cambio más reciente de un componente y descargarlos desde su historial.
 - Tema claro/oscuro con preferencia guardada en el navegador.
 

@@ -5,6 +5,7 @@ def test_create_component_preserves_all_fields(client, project_factory):
         "description": "Integración del canal empresarial",
         "cadena": "API",
         "step": 25,
+        "ref_id": "REF-API-001",
         "source_type": "repository",
         "source_reference": "services/payment-api",
     }

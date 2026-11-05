@@ -186,6 +186,7 @@ def _create_generated_changes(db: Session) -> dict[str, int]:
                 ),
                 cadena=chain,
                 step=step,
+                ref_id=f"REF-{token}",
             )
             db.add(component)
             db.flush()

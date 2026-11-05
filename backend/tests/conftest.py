@@ -88,6 +88,7 @@ def component_factory(db_session):
         description="Componente de prueba",
         cadena="PRD",
         step=1,
+        ref_id=None,
         source_type="other",
         source_reference=None,
     ):
@@ -97,6 +98,7 @@ def component_factory(db_session):
             description=description,
             cadena=cadena,
             step=step,
+            ref_id=ref_id,
             source_type=source_type,
             source_reference=source_reference,
         )

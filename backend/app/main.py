@@ -174,6 +174,7 @@ def create_component(
         description=component_data.description,
         cadena=component_data.cadena,
         step=component_data.step,
+        ref_id=component_data.ref_id,
         source_type=component_data.source_type,
         source_reference=component_data.source_reference,
     )
@@ -613,6 +614,5 @@ def download(
         media_type=file.content_type,
         filename=file.original_name
     )
-
 
 

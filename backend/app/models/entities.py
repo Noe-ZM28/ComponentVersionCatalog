@@ -57,6 +57,7 @@ class Component(Base):
     # Ubicación actual del componente.
     cadena: Mapped[str] = mapped_column(String(150), nullable=False)
     step: Mapped[int] = mapped_column(Integer, nullable=False)
+    ref_id: Mapped[str | None] = mapped_column(String(100), nullable=True)
 
     last_modified_at: Mapped[datetime] = mapped_column(
         DateTime(timezone=True),
@@ -220,5 +221,4 @@ class ChangeFile(Base):
 
     change: Mapped["Change"] = relationship(back_populates="files")
     file: Mapped["FileRecord"] = relationship(back_populates="changes")
-
 

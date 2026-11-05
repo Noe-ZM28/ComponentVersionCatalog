@@ -193,7 +193,7 @@
     const list = (project.components || []).filter(component => {
       const matchesCategory = !state.selectedCategory || componentType(component) === state.selectedCategory;
       const matchesSearch = !search ||
-        `${component.name} ${component.description} ${component.cadena}`.toLocaleLowerCase().includes(search);
+        `${component.name} ${component.description} ${component.cadena} ${component.ref_id || ""}`.toLocaleLowerCase().includes(search);
       return matchesCategory && matchesSearch;
     }).sort((left, right) => left.name.localeCompare(right.name, "es"));
 
@@ -203,6 +203,7 @@
       const latest = changes[0];
       return `<tr>
         <td><button class="text-button component-name" type="button" data-open-component="${component.id}">${escapeHtml(component.name)}</button><div class="subline">${escapeHtml(component.source_type || "other")}${component.source_reference ? ` · ${escapeHtml(component.source_reference)}` : ""}</div></td>
+        <td>${escapeHtml(component.ref_id || "—")}</td>
         <td><strong>${escapeHtml(component.cadena)}</strong><span class="muted"> / ${escapeHtml(component.step)}</span></td>
         <td>${escapeHtml(componentType(component))}</td>
         <td>${latest ? `<strong>#${latest.change_number}</strong><div class="subline">${ticketLink(latest.ticket)}</div>` : "—"}</td>
@@ -227,6 +228,7 @@
     $("detailId").textContent = `ID ${component.id}`;
     $("detailGrid").innerHTML = [
       ["Proyecto", project?.name],
+      ["RefID", component.ref_id || "—"],
       ["Cadena", component.cadena],
       ["Paso", component.step],
       ["Tipo de fuente", component.source_type || "other"],
@@ -349,6 +351,7 @@
     if (!currentProject()) return;
     openDialog("Nuevo componente", `<div class="form-grid">
       ${formField("Nombre", "name", { maxLength: 150 })}
+      ${formField("RefID", "ref_id", { required: false, maxLength: 100, placeholder: "REF-ABC-123" })}
       ${formField("Cadena (método)", "cadena", { maxLength: 150, placeholder: "PRD" })}
       ${formField("Paso", "step", { type: "number", value: 1 })}
       ${formField("Tipo de fuente", "source_type", { value: "other", maxLength: 30 })}
@@ -456,6 +459,7 @@
             description: form.get("description"),
             cadena: form.get("cadena"),
             step: Number(form.get("step")),
+            ref_id: form.get("ref_id") || null,
             source_type: form.get("source_type"),
             source_reference: form.get("source_reference") || null
           })
