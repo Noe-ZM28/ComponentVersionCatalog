@@ -1,5 +1,7 @@
+import os
 import sys
 from pathlib import Path
+from tempfile import gettempdir
 
 import pytest
 from fastapi.testclient import TestClient
@@ -11,6 +13,13 @@ from sqlalchemy.pool import StaticPool
 BACKEND_ROOT = Path(__file__).resolve().parents[1]
 if str(BACKEND_ROOT) not in sys.path:
     sys.path.insert(0, str(BACKEND_ROOT))
+
+# App settings are loaded when app.database is imported. Keep that module's
+# engine isolated from developer or deployment database URLs during tests.
+os.environ["DATABASE_URL"] = "sqlite://"
+os.environ["STORAGE_PATH"] = str(
+    Path(gettempdir()) / "component-version-catalog-test-files"
+)
 
 from app.database import Base, get_db
 from app.main import app
