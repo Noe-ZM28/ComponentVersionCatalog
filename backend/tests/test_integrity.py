@@ -1,7 +1,8 @@
 import pytest
-from sqlalchemy import func, select
+from sqlalchemy import create_engine, func, inspect, select, text
 from sqlalchemy.exc import IntegrityError
 
+from app.init_db import migrate_project_cust_num
 from app.models import Change, ChangeFile, Component, FileRecord, Project, Ticket
 from app.services.catalog_seed import seed_catalog
 
@@ -100,6 +101,10 @@ def test_demo_seed_keeps_foreign_keys_chains_steps_and_change_numbers_valid(db_s
     seeded_projects = db_session.scalars(select(Project)).all()
     assert seeded_projects
     assert all(project.name not in {"Proyecto 1", "Proyecto 2"} for project in seeded_projects)
+    assert all(
+        project.cust_num is not None and 100 <= project.cust_num <= 999
+        for project in seeded_projects
+    )
 
     invalid_changes = db_session.scalar(
         select(func.count())
@@ -123,3 +128,33 @@ def test_demo_seed_keeps_foreign_keys_chains_steps_and_change_numbers_valid(db_s
         select(Component).where(Component.name.like("% - % %"))
     ).all()
     assert all(1 <= component.step <= 25 for component in generated_components)
+
+
+def test_project_cust_num_migration_preserves_existing_rows():
+    legacy_engine = create_engine("sqlite://")
+    try:
+        with legacy_engine.begin() as connection:
+            connection.execute(
+                text(
+                    "CREATE TABLE projects "
+                    "(id INTEGER PRIMARY KEY, name VARCHAR(150) NOT NULL)"
+                )
+            )
+            connection.execute(
+                text("INSERT INTO projects (id, name) VALUES (1, 'Existente')")
+            )
+
+        migrate_project_cust_num(legacy_engine)
+
+        columns = {
+            column["name"]
+            for column in inspect(legacy_engine).get_columns("projects")
+        }
+        with legacy_engine.connect() as connection:
+            project = connection.execute(
+                text("SELECT id, name, cust_num FROM projects WHERE id = 1")
+            ).one()
+        assert "cust_num" in columns
+        assert project == (1, "Existente", None)
+    finally:
+        legacy_engine.dispose()

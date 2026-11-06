@@ -127,7 +127,8 @@ def create_project(
 
     new_project = Project(
         name=project_data.name,
-        description=project_data.description
+        description=project_data.description,
+        cust_num=project_data.cust_num,
     )
 
     db.add(new_project)
@@ -614,5 +615,4 @@ def download(
         media_type=file.content_type,
         filename=file.original_name
     )
-
 

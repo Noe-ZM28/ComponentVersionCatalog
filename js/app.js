@@ -113,7 +113,9 @@
       renderCategories();
       renderComponents();
       const project = currentProject();
-      $("projectDescription").textContent = project?.description || "";
+      $("projectDescription").textContent = project
+        ? `${project.cust_num == null ? "" : `CustNum: ${project.cust_num} · `}${project.description || ""}`
+        : "";
     } catch (error) {
       setConnection(false, error.message);
       showGlobalError(error);
@@ -127,7 +129,7 @@
     const selected = state.selectedProjectId;
     select.innerHTML = '<option value="">Selecciona un proyecto</option>' +
       state.projects.map(project =>
-        `<option value="${project.id}">${escapeHtml(project.name)}</option>`
+      `<option value="${project.id}">${project.cust_num == null ? "" : `${escapeHtml(project.cust_num)} · `}${escapeHtml(project.name)}</option>`
       ).join("");
     select.value = state.projects.some(project => String(project.id) === selected) ? selected : "";
     state.selectedProjectId = select.value;
@@ -135,7 +137,10 @@
     $("createTicketBtn").disabled = !state.selectedProjectId;
     $("projectElementsView").hidden = !state.selectedProjectId;
     $("projectSelectionPrompt").hidden = Boolean(state.selectedProjectId);
-    $("projectDescription").textContent = currentProject()?.description || "";
+    const project = currentProject();
+    $("projectDescription").textContent = project
+      ? `${project.cust_num == null ? "" : `CustNum: ${project.cust_num} · `}${project.description || ""}`
+      : "";
   }
 
   function renderStats() {
@@ -344,7 +349,11 @@
   }
 
   $("createProjectBtn").addEventListener("click", () => {
-    openDialog("Crear proyecto", `<div class="form-grid">${formField("Nombre", "name", { maxLength: 150 })}<label class="form-field full">Descripción<textarea name="description" rows="3" required></textarea></label></div>`, "Guardar", "Catálogo", "project");
+    openDialog("Crear proyecto", `<div class="form-grid">
+      ${formField("Nombre", "name", { maxLength: 150 })}
+      ${formField("CustNum", "cust_num", { type: "number", required: false, placeholder: "Número de cliente" })}
+      <label class="form-field full">Descripción<textarea name="description" rows="3" required></textarea></label>
+    </div>`, "Guardar", "Catálogo", "project");
   });
 
   $("createComponentBtn").addEventListener("click", () => {
@@ -447,7 +456,11 @@
         await api("/projects", {
           method: "POST",
           headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ name: form.get("name"), description: form.get("description") })
+          body: JSON.stringify({
+            name: form.get("name"),
+            description: form.get("description"),
+            cust_num: form.get("cust_num") === "" ? null : Number(form.get("cust_num"))
+          })
         });
         showToast("Proyecto creado.");
       } else if (mode === "component") {

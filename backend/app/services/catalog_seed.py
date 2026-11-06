@@ -139,6 +139,7 @@ def _create_generated_changes(db: Session) -> dict[str, int]:
                     description=random.choice(_PROJECT_DESCRIPTIONS).format(
                         region=region
                     ),
+                    cust_num=random.randint(100, 999),
                 )
                 db.add(project)
                 db.flush()

@@ -5,11 +5,13 @@ from .component import ComponentResponse
 class ProjectCreate(BaseModel):
     name: str = Field(min_length=1, max_length=150)
     description: str
+    cust_num: int | None = None
 
 class ProjectResponse(BaseModel):
     id: int
     name: str
     description: str
+    cust_num: int | None = None
     is_active: bool
     components: list[ComponentResponse]
 

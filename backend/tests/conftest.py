@@ -79,8 +79,10 @@ def client(session_factory, tmp_path, monkeypatch):
 
 @pytest.fixture
 def project_factory(db_session):
-    def create_project(name="Proyecto de prueba", description="Proyecto de prueba"):
-        project = Project(name=name, description=description)
+    def create_project(
+        name="Proyecto de prueba", description="Proyecto de prueba", cust_num=None
+    ):
+        project = Project(name=name, description=description, cust_num=cust_num)
         db_session.add(project)
         db_session.commit()
         db_session.refresh(project)

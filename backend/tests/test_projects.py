@@ -8,17 +8,46 @@ def test_health_and_root_endpoints(client):
 def test_create_and_list_projects(client):
     response = client.post(
         "/projects",
-        json={"name": "Banco Demo", "description": "Proyecto regional"},
+        json={
+            "name": "Banco Demo",
+            "description": "Proyecto regional",
+            "cust_num": 4872,
+        },
     )
 
     assert response.status_code == 201
     project = response.json()
     assert project["name"] == "Banco Demo"
+    assert project["cust_num"] == 4872
     assert project["components"] == []
 
     listed = client.get("/projects")
     assert listed.status_code == 200
     assert [item["id"] for item in listed.json()] == [project["id"]]
+    assert listed.json()[0]["cust_num"] == 4872
+
+
+def test_create_project_allows_missing_cust_num(client):
+    response = client.post(
+        "/projects",
+        json={"name": "Banco sin CustNum", "description": "Proyecto regional"},
+    )
+
+    assert response.status_code == 201
+    assert response.json()["cust_num"] is None
+
+
+def test_create_project_rejects_non_integer_cust_num(client):
+    response = client.post(
+        "/projects",
+        json={
+            "name": "Banco CustNum inválido",
+            "description": "Proyecto regional",
+            "cust_num": "no es entero",
+        },
+    )
+
+    assert response.status_code == 422
 
 
 def test_get_project_includes_components(client, project_factory, component_factory):
