@@ -23,7 +23,7 @@ os.environ["STORAGE_PATH"] = str(
 
 from app.database import Base, get_db
 from app.main import app
-from app.models import Change, Component, Project, Ticket
+from app.models import Change, Component, Project, Ticket, TypeComponent
 from app.services.file_service import settings
 
 
@@ -100,7 +100,7 @@ def component_factory(db_session):
         cadena="PRD",
         step=1,
         ref_id=None,
-        source_type="other",
+        type_component=TypeComponent.OTHER,
         source_reference=None,
     ):
         component = Component(
@@ -110,7 +110,11 @@ def component_factory(db_session):
             cadena=cadena,
             step=step,
             ref_id=ref_id,
-            source_type=source_type,
+            type_component=(
+                TypeComponent(type_component)
+                if isinstance(type_component, str)
+                else type_component
+            ),
             source_reference=source_reference,
         )
         db_session.add(component)

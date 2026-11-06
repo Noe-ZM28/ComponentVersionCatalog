@@ -1,8 +1,10 @@
 from datetime import datetime, timezone
+from enum import Enum as PyEnum
 
 from sqlalchemy import (
     Boolean,
     DateTime,
+    Enum as SqlEnum,
     ForeignKey,
     Integer,
     String,
@@ -12,6 +14,16 @@ from sqlalchemy import (
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 from app.database import Base
+
+
+class TypeComponent(str, PyEnum):
+    PC1 = "PC1"
+    REPORT = "Reporte"
+    CARRIER = "Carrier"
+    API = "API"
+    BATCH = "Batch"
+    SECURITY = "Seguridad"
+    OTHER = "other"
 
 
 def utc_now():
@@ -66,7 +78,16 @@ class Component(Base):
         onupdate=utc_now,
         nullable=False,
     )
-    source_type: Mapped[str] = mapped_column(String(30), nullable=False, default="other")
+    type_component: Mapped[TypeComponent] = mapped_column(
+        SqlEnum(
+            TypeComponent,
+            name="type_component_enum",
+            native_enum=False,
+            values_callable=lambda enum_type: [member.value for member in enum_type],
+        ),
+        nullable=False,
+        default=TypeComponent.OTHER,
+    )
     source_reference: Mapped[str] = mapped_column(Text, nullable=True, default=None)
 
     project: Mapped["Project"] = relationship(back_populates="components")

@@ -1,5 +1,7 @@
 from pydantic import BaseModel, ConfigDict, Field
 
+from app.models import TypeComponent
+
 
 class ComponentCreate(BaseModel):
     name: str = Field(min_length=1, max_length=150)
@@ -7,7 +9,7 @@ class ComponentCreate(BaseModel):
     cadena: str
     step: int = Field(ge=1)
     ref_id: str | None = Field(default=None, min_length=1, max_length=100)
-    source_type: str = Field(min_length=1, max_length=30, default="other")
+    type_component: TypeComponent = TypeComponent.OTHER
     source_reference: str | None = Field(min_length=1, default=None)
 
 class ComponentResponse(BaseModel):
@@ -18,7 +20,7 @@ class ComponentResponse(BaseModel):
     cadena: str
     step: int
     ref_id: str | None = Field(default=None)
-    source_type: str
+    type_component: TypeComponent
     source_reference: str | None = Field(default=None)
 
     model_config = ConfigDict(from_attributes=True)

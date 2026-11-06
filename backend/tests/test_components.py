@@ -6,7 +6,7 @@ def test_create_component_preserves_all_fields(client, project_factory):
         "cadena": "API",
         "step": 25,
         "ref_id": "REF-API-001",
-        "source_type": "repository",
+        "type_component": "API",
         "source_reference": "services/payment-api",
     }
 
@@ -64,6 +64,23 @@ def test_component_step_must_be_positive(client, project_factory):
             "description": "Paso cero",
             "cadena": "API",
             "step": 0,
+        },
+    )
+
+    assert response.status_code == 422
+
+
+def test_component_type_must_be_an_enum_value(client, project_factory):
+    project = project_factory()
+
+    response = client.post(
+        f"/projects/{project.id}/components",
+        json={
+            "name": "Tipo inválido",
+            "description": "Componente",
+            "cadena": "API",
+            "step": 1,
+            "type_component": "repository",
         },
     )
 

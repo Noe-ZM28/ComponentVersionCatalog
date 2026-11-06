@@ -55,14 +55,14 @@ def test_get_project_includes_components(client, project_factory, component_fact
     component_factory(
         project.id,
         name="Componente incluido",
-        source_type="database",
+        type_component="API",
         source_reference="catalog/components/demo",
     )
 
     response = client.get(f"/projects/{project.id}")
 
     assert response.status_code == 200
-    assert response.json()["components"][0]["source_type"] == "database"
+    assert response.json()["components"][0]["type_component"] == "API"
     assert response.json()["components"][0]["source_reference"] == "catalog/components/demo"
 
 

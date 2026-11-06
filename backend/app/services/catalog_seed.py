@@ -5,7 +5,7 @@ from uuid import uuid4
 from sqlalchemy import func, select
 from sqlalchemy.orm import Session
 
-from app.models import Change, Component, Project, Ticket
+from app.models import Change, Component, Project, Ticket, TypeComponent
 
 
 _BANK_PROJECTS = {
@@ -188,6 +188,7 @@ def _create_generated_changes(db: Session) -> dict[str, int]:
                 cadena=chain,
                 step=step,
                 ref_id=f"REF-{token}",
+                type_component=TypeComponent(category),
             )
             db.add(component)
             db.flush()

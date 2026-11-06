@@ -17,7 +17,7 @@ The front end uses plain HTML, CSS and JavaScript. To point it at another API or
 ## Funciones
 - Resumen de proyectos, componentes, tickets y cambios.
 - Filtros por proyecto/tipo, búsqueda y detalle con historial de cambios.
-- Alta de proyectos (con CustNum entero opcional), componentes (con RefID) y tickets; registro de varios cambios en un ticket; edición de cambios.
+- Alta de proyectos (con CustNum entero opcional), componentes (con RefID y tipo de componente enum) y tickets; registro de varios cambios en un ticket; edición de cambios.
 - Adjuntar archivos al cambio más reciente de un componente y descargarlos desde su historial.
 - Tema claro/oscuro con preferencia guardada en el navegador.
 

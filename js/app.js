@@ -3,6 +3,7 @@
 
   const API_BASE = (window.CVC_API_BASE || window.location.origin).replace(/\/+$/, "");
   const $ = id => document.getElementById(id);
+  const COMPONENT_TYPES = ["PC1", "Reporte", "Carrier", "API", "Batch", "Seguridad", "other"];
   const state = {
     projects: [],
     ticketsByProject: new Map(),
@@ -65,8 +66,7 @@
   }
 
   function componentType(component) {
-    if (component.source_type && component.source_type !== "other") return component.source_type;
-    return component.name.split(" - ")[0] || "Componente";
+    return component.type_component || "other";
   }
 
   function formatDate(value) {
@@ -155,16 +155,17 @@
   }
 
   function renderCategories() {
-    const components = currentProject()?.components || [];
-    const categories = [...new Set(components.map(componentType))].sort();
-    if (state.selectedCategory && !categories.includes(state.selectedCategory)) {
+    const project = currentProject();
+    const components = project?.components || [];
+    const disabled = project ? "" : " disabled";
+    if (state.selectedCategory && !COMPONENT_TYPES.includes(state.selectedCategory)) {
       state.selectedCategory = "";
     }
     $("categoryCards").innerHTML = [
-      `<button class="category ${state.selectedCategory === "" ? "active" : ""}" type="button" data-category=""><strong>Todos</strong><span>${components.length}</span></button>`,
-      ...categories.map(category => {
+      `<button class="category ${state.selectedCategory === "" ? "active" : ""}" type="button" data-category=""${disabled}><strong>Todos</strong><span>${components.length}</span></button>`,
+      ...COMPONENT_TYPES.map(category => {
         const count = components.filter(component => componentType(component) === category).length;
-        return `<button class="category ${state.selectedCategory === category ? "active" : ""}" type="button" data-category="${escapeHtml(category)}"><strong>${escapeHtml(category)}</strong><span>${count}</span></button>`;
+        return `<button class="category ${state.selectedCategory === category ? "active" : ""}" type="button" data-category="${escapeHtml(category)}"${disabled}><strong>${escapeHtml(category)}</strong><span>${count}</span></button>`;
       })
     ].join("");
     $("categoryCards").querySelectorAll("[data-category]").forEach(button => {
@@ -207,7 +208,7 @@
       const changes = componentChanges(component.id);
       const latest = changes[0];
       return `<tr>
-        <td><button class="text-button component-name" type="button" data-open-component="${component.id}">${escapeHtml(component.name)}</button><div class="subline">${escapeHtml(component.source_type || "other")}${component.source_reference ? ` · ${escapeHtml(component.source_reference)}` : ""}</div></td>
+        <td><button class="text-button component-name" type="button" data-open-component="${component.id}">${escapeHtml(component.name)}</button><div class="subline">${escapeHtml(component.type_component || "other")}${component.source_reference ? ` · ${escapeHtml(component.source_reference)}` : ""}</div></td>
         <td>${escapeHtml(component.ref_id || "—")}</td>
         <td><strong>${escapeHtml(component.cadena)}</strong><span class="muted"> / ${escapeHtml(component.step)}</span></td>
         <td>${escapeHtml(componentType(component))}</td>
@@ -236,7 +237,7 @@
       ["RefID", component.ref_id || "—"],
       ["Cadena", component.cadena],
       ["Paso", component.step],
-      ["Tipo de fuente", component.source_type || "other"],
+      ["Tipo de componente", component.type_component || "other"],
       ["Referencia", component.source_reference || "Sin referencia"],
       ["Cambios registrados", changes.length]
     ].map(([label, value]) => `<div class="detail-cell"><div class="label">${escapeHtml(label)}</div><strong>${escapeHtml(value ?? "—")}</strong></div>`).join("");
@@ -363,7 +364,9 @@
       ${formField("RefID", "ref_id", { required: false, maxLength: 100, placeholder: "REF-ABC-123" })}
       ${formField("Cadena (método)", "cadena", { maxLength: 150, placeholder: "PRD" })}
       ${formField("Paso", "step", { type: "number", value: 1 })}
-      ${formField("Tipo de fuente", "source_type", { value: "other", maxLength: 30 })}
+      <label class="form-field">Tipo de componente<select name="type_component" required>
+        ${COMPONENT_TYPES.map(type => `<option value="${escapeHtml(type)}">${escapeHtml(type)}</option>`).join("")}
+      </select></label>
       ${formField("Referencia de fuente", "source_reference", { required: false })}
       <label class="form-field full">Descripción<textarea name="description" rows="3" required></textarea></label>
     </div>`, "Guardar", "Catálogo", "component");
@@ -473,7 +476,7 @@
             cadena: form.get("cadena"),
             step: Number(form.get("step")),
             ref_id: form.get("ref_id") || null,
-            source_type: form.get("source_type"),
+            type_component: form.get("type_component"),
             source_reference: form.get("source_reference") || null
           })
         });
