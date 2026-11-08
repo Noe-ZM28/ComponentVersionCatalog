@@ -3,7 +3,12 @@ from sqlalchemy import create_engine, func, inspect, select, text
 from sqlalchemy.exc import IntegrityError
 
 from app.init_db import migrate_component_type, migrate_project_cust_num
-from app.models import Change, ChangeFile, Component, FileRecord, Project, Ticket
+from app.models.change import Change
+from app.models.change_file import ChangeFile
+from app.models.component import Component
+from app.models.file_record import FileRecord
+from app.models.project import Project
+from app.models.ticket import Ticket
 from app.services.catalog_seed import seed_catalog
 
 

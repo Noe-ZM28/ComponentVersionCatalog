@@ -1,14 +1,7 @@
 from sqlalchemy import inspect, text
 
 from app.database import Base, engine
-from app.models import (
-    Project,
-    Component,
-    Ticket,
-    Change,
-    FileRecord,
-    ChangeFile,
-)
+import app.models
 
 def initialize_database():
     Base.metadata.create_all(bind=engine)

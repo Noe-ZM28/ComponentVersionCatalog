@@ -5,7 +5,11 @@ from uuid import uuid4
 from sqlalchemy import func, select
 from sqlalchemy.orm import Session
 
-from app.models import Change, Component, Project, Ticket, TypeComponent
+from app.models.change import Change
+from app.models.component import Component
+from app.models.enums import TypeComponent
+from app.models.project import Project
+from app.models.ticket import Ticket
 
 
 _BANK_PROJECTS = {

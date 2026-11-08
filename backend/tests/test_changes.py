@@ -1,5 +1,5 @@
 from sqlalchemy import select
-from app.models import Change
+from app.models.change import Change
 
 def test_add_multiple_changes_assigns_consecutive_numbers(
     client, project_factory, component_factory, ticket_factory

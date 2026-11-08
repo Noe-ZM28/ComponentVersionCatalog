@@ -1,7 +1,8 @@
 import json
 import app.main as main_module
 from sqlalchemy import select
-from app.models import ChangeFile, FileRecord
+from app.models.change_file import ChangeFile
+from app.models.file_record import FileRecord
 
 def test_upload_and_download_file(client, project_factory, component_factory, ticket_factory):
     project = project_factory()
@@ -219,4 +220,3 @@ def test_upload_multiple_files_creates_all_associations(
     } == {"before", "after"}
 
     assert all(item["file_id"] for item in result["files"])
-

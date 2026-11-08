@@ -23,7 +23,11 @@ os.environ["STORAGE_PATH"] = str(
 
 from app.database import Base, get_db
 from app.main import app
-from app.models import Change, Component, Project, Ticket, TypeComponent
+from app.models.change import Change
+from app.models.component import Component
+from app.models.enums import TypeComponent
+from app.models.project import Project
+from app.models.ticket import Ticket
 from app.services.file_service import settings
 
 
