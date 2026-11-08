@@ -1,6 +1,6 @@
 from pydantic import BaseModel, ConfigDict, Field
 
-from app.models import TypeComponent
+from app.models.enums import TypeComponent
 
 
 class ComponentCreate(BaseModel):
