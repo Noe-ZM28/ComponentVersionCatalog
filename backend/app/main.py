@@ -9,7 +9,12 @@ from pydantic import ValidationError
 
 from app.database import get_db
 
-from app.models import Project, Component, Ticket, Change, ChangeFile, FileRecord
+from app.models.change import Change
+from app.models.change_file import ChangeFile
+from app.models.component import Component
+from app.models.file_record import FileRecord
+from app.models.project import Project
+from app.models.ticket import Ticket
 
 from app.schemas.project import ProjectCreate, ProjectResponse
 from app.schemas.component import ComponentCreate, ComponentResponse
@@ -21,6 +26,8 @@ from app.schemas.file_record import FileRecordResponse, FileUploadMetadata
 from app.config import settings
 
 from app.services.catalog_seed import seed_catalog
+from app.services.component_service import update_components
+from app.services.project_service import update_projects_service
 from app.services.file_service import save_file_to_storage, get_file_path
 
 from typing import Annotated
@@ -110,6 +117,17 @@ def get_project(
 
     return project
 
+@app.post("/projects/update")
+def update_projects(
+    db: Session = Depends(get_db),
+    ):
+    state_projects = update_projects_service(db)
+    return {
+        "new_projects":     [f"{project.cust_num} · {project.name}" for project in state_projects["new_projects"]],
+        "updated_projects": [f"{project.cust_num} · {project.name}" for project in state_projects["updated_projects"]],
+        "skipped_projects": [f"{project.cust_num} · {project.name}" for project in state_projects["skipped_projects"]],
+    }
+
 @app.post("/projects", response_model=ProjectResponse, status_code=201)
 def create_project(
     project_data: ProjectCreate,
@@ -185,6 +203,23 @@ def create_component(
     db.refresh(new_component)
 
     return new_component
+
+@app.post("/projects/{project_id}/components/update", status_code=501)
+def update_components_endpoint(
+    project_id: int,
+    db: Session = Depends(get_db),
+):
+    if db.get(Project, project_id) is None:
+        raise HTTPException(
+            status_code=404,
+            detail="No existe un proyecto con ese ID.",
+        )
+
+    update_components(project_id)
+    raise HTTPException(
+        status_code=501,
+        detail="La actualización de componentes aún no está implementada.",
+    )
 
 @app.post("/projects/{project_id}/tickets", response_model=TicketResponse, status_code=201)
 def create_ticket(

@@ -50,6 +50,28 @@
     message.hidden = false;
   }
 
+  function showProjectUpdateSummary(summary) {
+    const categories = [
+      { key: "new_projects", countId: "projectsAddedCount", listId: "projectsAddedList" },
+      { key: "updated_projects", countId: "projectsModifiedCount", listId: "projectsModifiedList" },
+      { key: "skipped_projects", countId: "projectsIgnoredCount", listId: "projectsIgnoredList" }
+    ];
+
+    categories.forEach(({ key, countId, listId }) => {
+      const projects = summary[key];
+      if (!Array.isArray(projects) || !projects.every(name => typeof name === "string")) {
+        throw new Error("La API devolvió un resumen de actualización inválido.");
+      }
+
+      $(countId).textContent = projects.length;
+      $(listId).innerHTML = projects.length
+        ? projects.map(name => `<li>${escapeHtml(name)}</li>`).join("")
+        : "<li>Ninguno</li>";
+    });
+
+    $("projectUpdateDialog").showModal();
+  }
+
   function setConnection(connected, message = "") {
     const status = $("connectionStatus");
     status.textContent = connected ? "API conectada" : "API no disponible";
@@ -102,27 +124,54 @@
     try {
       const projects = await api("/projects");
       state.projects = projects;
-      const ticketResults = await Promise.all(projects.map(async project => {
-        const tickets = await api(`/projects/${project.id}/tickets`);
-        return [String(project.id), tickets];
-      }));
+
+      // Comprobar si existen proyectos
+      if (!projects || projects.length === 0) {
+        state.ticketsByProject = new Map();
+
+        setConnection(true);
+        renderProjectOptions();
+        renderStats();
+        renderCategories();
+        renderComponents();
+
+        $("projectDescription").textContent = "";
+        $("projectSelectionPrompt").textContent =
+          "No hay proyectos para cargar.";
+
+        return;
+      }
+
+      const ticketResults = await Promise.all(
+        projects.map(async project => {
+          const tickets = await api(`/projects/${project.id}/tickets`);
+          return [String(project.id), tickets];
+        })
+      );
+
       state.ticketsByProject = new Map(ticketResults);
+
       setConnection(true);
       renderProjectOptions();
       renderStats();
       renderCategories();
       renderComponents();
+
       const project = currentProject();
+
       $("projectDescription").textContent = project
         ? `${project.cust_num == null ? "" : `CustNum: ${project.cust_num} · `}${project.description || ""}`
         : "";
+
     } catch (error) {
       setConnection(false, error.message);
       showGlobalError(error);
+
       $("projectSelectionPrompt").textContent =
         `No se pudo cargar el catálogo. Comprueba que el backend esté activo (${API_BASE}) y vuelve a intentar.`;
     }
   }
+
 
   function renderProjectOptions() {
     const select = $("projectFilter");
@@ -133,7 +182,7 @@
       ).join("");
     select.value = state.projects.some(project => String(project.id) === selected) ? selected : "";
     state.selectedProjectId = select.value;
-    $("createComponentBtn").disabled = !state.selectedProjectId;
+    $("updateComponentsBtn").disabled = !state.selectedProjectId;
     $("createTicketBtn").disabled = !state.selectedProjectId;
     $("projectElementsView").hidden = !state.selectedProjectId;
     $("projectSelectionPrompt").hidden = Boolean(state.selectedProjectId);
@@ -349,27 +398,45 @@
     return '<button class="btn small" type="button" id="addChangeEntry">＋ Otro cambio</button>';
   }
 
-  $("createProjectBtn").addEventListener("click", () => {
-    openDialog("Crear proyecto", `<div class="form-grid">
-      ${formField("Nombre", "name", { maxLength: 150 })}
-      ${formField("CustNum", "cust_num", { type: "number", required: false, placeholder: "Número de cliente" })}
-      <label class="form-field full">Descripción<textarea name="description" rows="3" required></textarea></label>
-    </div>`, "Guardar", "Catálogo", "project");
+  $("updateProjectsBtn").addEventListener("click", async () => {
+    const button = $("updateProjectsBtn");
+    button.disabled = true;
+    try {
+      const summary = await api("/projects/update", { method: "POST" });
+      await loadCatalog();
+      showProjectUpdateSummary(summary);
+    } catch (error) {
+      showToast(error.message, true);
+    } finally {
+      button.disabled = false;
+    }
   });
 
-  $("createComponentBtn").addEventListener("click", () => {
+  function closeProjectUpdateDialog() {
+    $("projectUpdateDialog").close();
+  }
+
+  $("projectUpdateClose").addEventListener("click", closeProjectUpdateDialog);
+  $("projectUpdateDone").addEventListener("click", closeProjectUpdateDialog);
+  $("projectUpdateDialog").addEventListener("click", event => {
+    if (event.target === $("projectUpdateDialog")) closeProjectUpdateDialog();
+  });
+
+  $("updateComponentsBtn").addEventListener("click", async () => {
     if (!currentProject()) return;
-    openDialog("Nuevo componente", `<div class="form-grid">
-      ${formField("Nombre", "name", { maxLength: 150 })}
-      ${formField("RefID", "ref_id", { required: false, maxLength: 100, placeholder: "REF-ABC-123" })}
-      ${formField("Cadena (método)", "cadena", { maxLength: 150, placeholder: "PRD" })}
-      ${formField("Paso", "step", { type: "number", value: 1 })}
-      <label class="form-field">Tipo de componente<select name="type_component" required>
-        ${COMPONENT_TYPES.map(type => `<option value="${escapeHtml(type)}">${escapeHtml(type)}</option>`).join("")}
-      </select></label>
-      ${formField("Referencia de fuente", "source_reference", { required: false })}
-      <label class="form-field full">Descripción<textarea name="description" rows="3" required></textarea></label>
-    </div>`, "Guardar", "Catálogo", "component");
+    const button = $("updateComponentsBtn");
+    button.disabled = true;
+    try {
+      await api(`/projects/${state.selectedProjectId}/components/update`, {
+        method: "POST"
+      });
+      showToast("Componentes actualizados.");
+      await loadCatalog();
+    } catch (error) {
+      showToast(error.message, true);
+    } finally {
+      button.disabled = false;
+    }
   });
 
   $("createTicketBtn").addEventListener("click", () => {

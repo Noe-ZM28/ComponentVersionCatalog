@@ -28,7 +28,7 @@
             <h1>Catálogo por proyecto</h1>
             <p class="intro">Consulta proyectos, componentes y el historial de cambios registrado por el equipo.</p>
           </div>
-          <button class="btn primary" id="createProjectBtn" type="button">＋ Nuevo proyecto</button>
+          <button class="btn primary" id="updateProjectsBtn" type="button">Actualizar proyectos</button>
         </div>
 
         <div id="globalMessage" class="notice" role="alert" hidden></div>
@@ -46,7 +46,7 @@
               <option value="">Selecciona un proyecto</option>
             </select>
             <p id="projectDescription" class="small muted"></p>
-            <button class="btn" id="createComponentBtn" type="button" disabled>＋ Nuevo componente</button>
+            <button class="btn" id="updateComponentsBtn" type="button" disabled>Actualizar componentes</button>
             <button class="btn" id="createTicketBtn" type="button" disabled>＋ Registrar ticket</button>
           </section>
           <section class="panel">
@@ -106,6 +106,25 @@
         <div id="dialogFields"></div>
         <div class="dialog-actions"><button class="btn" id="dialogCancel" type="button">Cancelar</button><button class="btn primary" id="dialogSubmit" type="submit">Guardar</button></div>
       </form>
+    </dialog>
+    <dialog id="projectUpdateDialog" class="entity-dialog update-summary-dialog" aria-labelledby="projectUpdateTitle">
+      <div class="update-summary-body">
+        <div class="section-head">
+          <div><div class="eyebrow">Sincronización</div><h2 id="projectUpdateTitle">Resultado de actualización de proyectos</h2></div>
+          <button class="icon-button" id="projectUpdateClose" type="button" aria-label="Cerrar">×</button>
+        </div>
+        <div class="update-summary-stats">
+          <article class="update-summary-stat added"><span>Añadidos</span><strong id="projectsAddedCount">0</strong></article>
+          <article class="update-summary-stat modified"><span>Modificados</span><strong id="projectsModifiedCount">0</strong></article>
+          <article class="update-summary-stat ignored"><span>Ignorados</span><strong id="projectsIgnoredCount">0</strong></article>
+        </div>
+        <div class="update-summary-lists">
+          <section><h3>Proyectos añadidos</h3><ul id="projectsAddedList"></ul></section>
+          <section><h3>Proyectos modificados</h3><ul id="projectsModifiedList"></ul></section>
+          <section><h3>Proyectos ignorados</h3><ul id="projectsIgnoredList"></ul></section>
+        </div>
+        <div class="dialog-actions"><button class="btn primary" id="projectUpdateDone" type="button">Listo</button></div>
+      </div>
     </dialog>
     <input id="fileInput" type="file" multiple hidden>
     <div class="toast" id="toast" role="status" aria-live="polite"></div>

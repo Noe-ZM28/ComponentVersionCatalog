@@ -1388,6 +1388,87 @@ W
     padding: 22px
 }
 
+.update-summary-body {
+    padding: 22px
+}
+
+.update-summary-dialog .section-head {
+    margin-bottom: 20px
+}
+
+.update-summary-dialog h2 {
+    margin: 4px 0 0
+}
+
+.update-summary-stats {
+    display: grid;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: 10px
+}
+
+.update-summary-stat {
+    display: grid;
+    gap: 3px;
+    padding: 12px;
+    border: 1px solid var(--line);
+    border-radius: 9px;
+    background: var(--blue-soft)
+}
+
+.update-summary-stat span {
+    color: var(--muted);
+    font-size: 12px;
+    font-weight: 650
+}
+
+.update-summary-stat strong {
+    font-size: 24px
+}
+
+.update-summary-stat.added strong {
+    color: var(--green)
+}
+
+.update-summary-stat.modified strong {
+    color: var(--blue)
+}
+
+.update-summary-stat.ignored strong {
+    color: var(--amber)
+}
+
+.update-summary-lists {
+    display: grid;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: 12px;
+    margin-top: 20px
+}
+
+.update-summary-lists section {
+    min-width: 0
+}
+
+.update-summary-lists h3 {
+    margin: 0 0 7px;
+    font-size: 13px
+}
+
+.update-summary-lists ul {
+    max-height: 180px;
+    overflow: auto;
+    margin: 0;
+    padding: 10px 10px 10px 28px;
+    border: 1px solid var(--line);
+    border-radius: 8px;
+    color: var(--muted);
+    font-size: 12px;
+    overflow-wrap: anywhere
+}
+
+.update-summary-lists li + li {
+    margin-top: 4px
+}
+
 .entity-dialog .section-head {
     margin-bottom: 20px
 }
@@ -1517,6 +1598,10 @@ W
 
     .form-grid,
     .change-entry {
+        grid-template-columns: 1fr
+    }
+
+    .update-summary-lists {
         grid-template-columns: 1fr
     }
 

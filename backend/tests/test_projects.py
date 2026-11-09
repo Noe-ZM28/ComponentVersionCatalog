@@ -27,6 +27,33 @@ def test_create_and_list_projects(client):
     assert listed.json()[0]["cust_num"] == 4872
 
 
+def test_update_projects_returns_project_names_by_result(client, monkeypatch):
+    from app import main
+
+    class ProjectResult:
+        def __init__(self, name):
+            self.name = name
+
+    monkeypatch.setattr(
+        main,
+        "update_projects_service",
+        lambda _db: {
+            "new_projects": [ProjectResult("Banco Nuevo")],
+            "updated_projects": [ProjectResult("Banco Actualizado")],
+            "skipped_projects": [ProjectResult("Banco Sin Cambios")],
+        },
+    )
+
+    response = client.post("/projects/update")
+
+    assert response.status_code == 200
+    assert response.json() == {
+        "new_projects": ["Banco Nuevo"],
+        "updated_projects": ["Banco Actualizado"],
+        "skipped_projects": ["Banco Sin Cambios"],
+    }
+
+
 def test_create_project_allows_missing_cust_num(client):
     response = client.post(
         "/projects",

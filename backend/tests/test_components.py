@@ -85,3 +85,29 @@ def test_component_type_must_be_an_enum_value(client, project_factory):
     )
 
     assert response.status_code == 422
+
+
+def test_update_components_passes_project_id_and_reports_not_implemented(
+    client, project_factory, monkeypatch
+):
+    from app import main
+
+    project = project_factory()
+    calls = []
+    monkeypatch.setattr(
+        main, "update_components", lambda project_id: calls.append(project_id)
+    )
+
+    response = client.post(f"/projects/{project.id}/components/update")
+
+    assert calls == [project.id]
+    assert response.status_code == 501
+    assert response.json()["detail"] == (
+        "La actualización de componentes aún no está implementada."
+    )
+
+
+def test_update_components_for_missing_project_returns_not_found(client):
+    response = client.post("/projects/9999/components/update")
+
+    assert response.status_code == 404

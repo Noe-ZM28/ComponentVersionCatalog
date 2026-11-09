@@ -13,7 +13,7 @@ class Project(Base):
     id: Mapped[int] = mapped_column(primary_key=True)
     name: Mapped[str] = mapped_column(String(150), unique=True, index=True)
     description: Mapped[str] = mapped_column(Text, nullable=False)
-    cust_num: Mapped[int | None] = mapped_column(Integer, nullable=True)
+    cust_num: Mapped[int | None] = mapped_column(Integer, unique=True, index=True, nullable=True)
     is_active: Mapped[bool] = mapped_column(Boolean, default=True, nullable=False)
     last_modified_at: Mapped[datetime] = mapped_column(
         DateTime(timezone=True),
