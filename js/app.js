@@ -91,7 +91,36 @@
         : "<li>Ninguno</li>";
     });
 
-    $("componentUpdateDialog").showModal();
+    $("componentUpdateTitle").textContent = "Resultado de actualización de componentes";
+    $("componentUpdateProgress").hidden = true;
+    $("componentUpdateResults").hidden = false;
+    $("componentUpdateError").hidden = true;
+    $("componentUpdateDone").hidden = false;
+    $("componentUpdateClose").disabled = false;
+    $("componentUpdateDialog").hidden = false;
+  }
+
+  function showComponentUpdateProgress() {
+    $("componentUpdateTitle").textContent = "Sincronizando componentes";
+    $("componentUpdateStatus").textContent = "La sincronización está en curso. El resultado aparecerá aquí.";
+    $("componentUpdateProgress").hidden = false;
+    $("componentUpdateResults").hidden = true;
+    $("componentUpdateError").hidden = true;
+    $("componentUpdateDone").hidden = true;
+    $("componentUpdateClose").disabled = true;
+    $("componentUpdateDialog").hidden = false;
+  }
+
+  function showComponentUpdateError(error) {
+    $("componentUpdateTitle").textContent = "No se pudo sincronizar componentes";
+    $("componentUpdateProgress").hidden = true;
+    $("componentUpdateResults").hidden = true;
+    const errorMessage = $("componentUpdateError");
+    errorMessage.textContent = error.message || "No fue posible completar la sincronización.";
+    errorMessage.hidden = false;
+    $("componentUpdateDone").hidden = false;
+    $("componentUpdateClose").disabled = false;
+    $("componentUpdateDialog").hidden = false;
   }
 
   function setConnection(connected, message = "") {
@@ -425,8 +454,8 @@
     button.disabled = true;
     try {
       const summary = await api("/projects/update", { method: "POST" });
-      await loadCatalog();
       showProjectUpdateSummary(summary);
+      await loadCatalog();
     } catch (error) {
       showToast(error.message, true);
     } finally {
@@ -445,7 +474,7 @@
   });
 
   function closeComponentUpdateDialog() {
-    $("componentUpdateDialog").close();
+    $("componentUpdateDialog").hidden = true;
   }
 
   $("componentUpdateClose").addEventListener("click", closeComponentUpdateDialog);
@@ -459,13 +488,14 @@
     const button = $("updateComponentsBtn");
     button.disabled = true;
     try {
+      showComponentUpdateProgress();
       const summary = await api(`/projects/${state.selectedProjectId}/components/update`, {
         method: "POST"
       });
-      await loadCatalog();
       showComponentUpdateSummary(summary);
+      await loadCatalog();
     } catch (error) {
-      showToast(error.message, true);
+      showComponentUpdateError(error);
     } finally {
       button.disabled = false;
     }
