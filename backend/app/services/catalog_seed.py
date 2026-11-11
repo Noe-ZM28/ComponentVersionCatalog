@@ -118,7 +118,7 @@ def _create_generated_changes(db: Session) -> dict[str, int]:
     projects = list(db.scalars(select(Project).order_by(Project.id)).all())
     components = list(db.scalars(select(Component).order_by(Component.id)).all())
     existing_project_names = {project.name for project in projects}
-    change_count = random.randint(1, 15)
+    change_count = random.randint(1, 50)
 
     for _ in range(change_count):
         if not projects:
@@ -168,7 +168,7 @@ def _create_generated_changes(db: Session) -> dict[str, int]:
         if create_component:
             category, purpose = random.choice(_GENERATED_COMPONENT_TYPES)
             chain, method = random.choice(list(_CHAIN_METHODS.items()))
-            step = random.randint(1, 25)
+            step = random.randint(1, 99)
             system = random.choice(
                 ("Switch Atlas", "Gateway Boreal", "Core Meridian", "Hub Nopal")
             )
