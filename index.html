@@ -126,6 +126,25 @@
         <div class="dialog-actions"><button class="btn primary" id="projectUpdateDone" type="button">Listo</button></div>
       </div>
     </dialog>
+    <dialog id="componentUpdateDialog" class="entity-dialog update-summary-dialog" aria-labelledby="componentUpdateTitle">
+      <div class="update-summary-body">
+        <div class="section-head">
+          <div><div class="eyebrow">Sincronización</div><h2 id="componentUpdateTitle">Resultado de actualización de componentes</h2></div>
+          <button class="icon-button" id="componentUpdateClose" type="button" aria-label="Cerrar">×</button>
+        </div>
+        <div class="update-summary-stats">
+          <article class="update-summary-stat added"><span>Añadidos</span><strong id="componentsAddedCount">0</strong></article>
+          <article class="update-summary-stat modified"><span>Modificados</span><strong id="componentsModifiedCount">0</strong></article>
+          <article class="update-summary-stat ignored"><span>Ignorados</span><strong id="componentsIgnoredCount">0</strong></article>
+        </div>
+        <div class="update-summary-lists">
+          <section><h3>Componentes añadidos</h3><ul id="componentsAddedList"></ul></section>
+          <section><h3>Componentes modificados</h3><ul id="componentsModifiedList"></ul></section>
+          <section><h3>Componentes ignorados</h3><ul id="componentsIgnoredList"></ul></section>
+        </div>
+        <div class="dialog-actions"><button class="btn primary" id="componentUpdateDone" type="button">Listo</button></div>
+      </div>
+    </dialog>
     <input id="fileInput" type="file" multiple hidden>
     <div class="toast" id="toast" role="status" aria-live="polite"></div>
   </div>

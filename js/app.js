@@ -72,6 +72,28 @@
     $("projectUpdateDialog").showModal();
   }
 
+  function showComponentUpdateSummary(summary) {
+    const categories = [
+      { key: "new_components", countId: "componentsAddedCount", listId: "componentsAddedList" },
+      { key: "updated_components", countId: "componentsModifiedCount", listId: "componentsModifiedList" },
+      { key: "skipped_components", countId: "componentsIgnoredCount", listId: "componentsIgnoredList" }
+    ];
+
+    categories.forEach(({ key, countId, listId }) => {
+      const components = summary[key];
+      if (!Array.isArray(components) || !components.every(name => typeof name === "string")) {
+        throw new Error("La API devolvió un resumen de actualización de componentes inválido.");
+      }
+
+      $(countId).textContent = components.length;
+      $(listId).innerHTML = components.length
+        ? components.map(name => `<li>${escapeHtml(name)}</li>`).join("")
+        : "<li>Ninguno</li>";
+    });
+
+    $("componentUpdateDialog").showModal();
+  }
+
   function setConnection(connected, message = "") {
     const status = $("connectionStatus");
     status.textContent = connected ? "API conectada" : "API no disponible";
@@ -422,16 +444,26 @@
     if (event.target === $("projectUpdateDialog")) closeProjectUpdateDialog();
   });
 
+  function closeComponentUpdateDialog() {
+    $("componentUpdateDialog").close();
+  }
+
+  $("componentUpdateClose").addEventListener("click", closeComponentUpdateDialog);
+  $("componentUpdateDone").addEventListener("click", closeComponentUpdateDialog);
+  $("componentUpdateDialog").addEventListener("click", event => {
+    if (event.target === $("componentUpdateDialog")) closeComponentUpdateDialog();
+  });
+
   $("updateComponentsBtn").addEventListener("click", async () => {
     if (!currentProject()) return;
     const button = $("updateComponentsBtn");
     button.disabled = true;
     try {
-      await api(`/projects/${state.selectedProjectId}/components/update`, {
+      const summary = await api(`/projects/${state.selectedProjectId}/components/update`, {
         method: "POST"
       });
-      showToast("Componentes actualizados.");
       await loadCatalog();
+      showComponentUpdateSummary(summary);
     } catch (error) {
       showToast(error.message, true);
     } finally {

@@ -26,7 +26,7 @@ from app.schemas.file_record import FileRecordResponse, FileUploadMetadata
 from app.config import settings
 
 from app.services.catalog_seed import seed_catalog
-from app.services.component_service import update_components
+from app.services.component_service import update_components_service
 from app.services.project_service import update_projects_service
 from app.services.file_service import save_file_to_storage, get_file_path
 
@@ -117,7 +117,7 @@ def get_project(
 
     return project
 
-@app.post("/projects/update")
+@app.post("/projects/update", status_code=201)
 def update_projects(
     db: Session = Depends(get_db),
     ):
@@ -204,22 +204,19 @@ def create_component(
 
     return new_component
 
-@app.post("/projects/{project_id}/components/update", status_code=501)
-def update_components_endpoint(
+@app.post("/projects/{project_id}/components/update", status_code=201)
+def update_components(
     project_id: int,
     db: Session = Depends(get_db),
-):
-    if db.get(Project, project_id) is None:
-        raise HTTPException(
-            status_code=404,
-            detail="No existe un proyecto con ese ID.",
-        )
+    ):
 
-    update_components(project_id)
-    raise HTTPException(
-        status_code=501,
-        detail="La actualización de componentes aún no está implementada.",
-    )
+    state_components = update_components_service(project_id, db)
+    return{
+        "new_components":     [f"{component.ref_id}: {component.name}" for component in state_components["new_components"]],
+        "updated_components": [f"{component.ref_id}: {component.name}" for component in state_components["updated_components"]],
+        "skipped_components": [f"{component.ref_id}: {component.name}" for component in state_components["skipped_components"]],
+    }
+
 
 @app.post("/projects/{project_id}/tickets", response_model=TicketResponse, status_code=201)
 def create_ticket(
@@ -602,7 +599,7 @@ def download(
     change_id: int,
     file_id: int,
     db: Session = Depends(get_db)
-):
+    ):
     # Comprobar que existe el proyecto
     project = db.query(Project).filter(Project.id == project_id).first()
 
