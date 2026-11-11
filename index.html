@@ -5,7 +5,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <meta name="theme-color" content="#172b4d">
   <title>Component Version Catalog</title>
-  <link rel="stylesheet" href="/css/styles.css?v=2">
+  <link rel="stylesheet" href="/css/styles.css?v=3">
 </head>
 <body>
   <div class="app">
@@ -127,34 +127,36 @@
       </div>
     </dialog>
     <section id="componentUpdateDialog" class="component-update-overlay" role="dialog" aria-modal="true" aria-labelledby="componentUpdateTitle" hidden>
-      <div class="component-update-panel update-summary-dialog">
-        <div class="section-head">
-          <div><div class="eyebrow">Sincronización</div><h2 id="componentUpdateTitle">Resultado de actualización de componentes</h2></div>
-          <button class="icon-button" id="componentUpdateClose" type="button" aria-label="Cerrar" disabled>×</button>
-        </div>
-        <div id="componentUpdateProgress" class="component-update-progress" hidden>
-          <span class="component-update-spinner" aria-hidden="true"></span>
-          <p id="componentUpdateStatus" role="status">La sincronización está en curso. El resultado aparecerá aquí.</p>
-        </div>
-        <div id="componentUpdateResults" hidden>
-          <div class="update-summary-stats">
-            <article class="update-summary-stat added"><span>Añadidos</span><strong id="componentsAddedCount">0</strong></article>
-            <article class="update-summary-stat modified"><span>Modificados</span><strong id="componentsModifiedCount">0</strong></article>
-            <article class="update-summary-stat ignored"><span>Ignorados</span><strong id="componentsIgnoredCount">0</strong></article>
+      <div class="entity-dialog update-summary-dialog component-update-panel">
+        <div class="update-summary-body">
+          <div class="section-head">
+            <div><div class="eyebrow">Sincronización</div><h2 id="componentUpdateTitle">Resultado de actualización de componentes</h2></div>
+            <button class="icon-button" id="componentUpdateClose" type="button" aria-label="Cerrar" disabled>×</button>
           </div>
-          <div class="update-summary-lists">
-            <section><h3>Componentes añadidos</h3><ul id="componentsAddedList"></ul></section>
-            <section><h3>Componentes modificados</h3><ul id="componentsModifiedList"></ul></section>
-            <section><h3>Componentes ignorados</h3><ul id="componentsIgnoredList"></ul></section>
+          <div id="componentUpdateProgress" class="component-update-progress" hidden>
+            <span class="component-update-spinner" aria-hidden="true"></span>
+            <p id="componentUpdateStatus" role="status">La sincronización está en curso. El resultado aparecerá aquí.</p>
           </div>
+          <div id="componentUpdateResults" hidden>
+            <div class="update-summary-stats">
+              <article class="update-summary-stat added"><span>Añadidos</span><strong id="componentsAddedCount">0</strong></article>
+              <article class="update-summary-stat modified"><span>Modificados</span><strong id="componentsModifiedCount">0</strong></article>
+              <article class="update-summary-stat ignored"><span>Ignorados</span><strong id="componentsIgnoredCount">0</strong></article>
+            </div>
+            <div class="update-summary-lists">
+              <section><h3>Componentes añadidos</h3><ul id="componentsAddedList"></ul></section>
+              <section><h3>Componentes modificados</h3><ul id="componentsModifiedList"></ul></section>
+              <section><h3>Componentes ignorados</h3><ul id="componentsIgnoredList"></ul></section>
+            </div>
+          </div>
+          <p id="componentUpdateError" class="notice" role="alert" hidden></p>
+          <div class="dialog-actions"><button class="btn primary" id="componentUpdateDone" type="button" hidden>Listo</button></div>
         </div>
-        <p id="componentUpdateError" class="notice" role="alert" hidden></p>
-        <div class="dialog-actions"><button class="btn primary" id="componentUpdateDone" type="button" hidden>Listo</button></div>
       </div>
     </section>
     <input id="fileInput" type="file" multiple hidden>
     <div class="toast" id="toast" role="status" aria-live="polite"></div>
   </div>
-  <script src="/js/app.js?v=2" defer></script>
+  <script src="/js/app.js?v=3" defer></script>
 </body>
 </html>
