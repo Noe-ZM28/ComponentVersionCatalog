@@ -19,12 +19,13 @@ def test_create_and_list_projects(client):
     project = response.json()
     assert project["name"] == "Banco Demo"
     assert project["cust_num"] == 4872
-    assert project["components"] == []
+    assert "components" not in project
 
     listed = client.get("/projects")
     assert listed.status_code == 200
     assert [item["id"] for item in listed.json()] == [project["id"]]
     assert listed.json()[0]["cust_num"] == 4872
+    assert "components" not in listed.json()[0]
 
 
 def test_update_projects_returns_project_names_by_result(client, monkeypatch):
@@ -77,20 +78,26 @@ def test_create_project_rejects_non_integer_cust_num(client):
     assert response.status_code == 422
 
 
-def test_get_project_includes_components(client, project_factory, component_factory):
+def test_get_project_includes_components_and_tickets(
+    client, project_factory, component_factory, ticket_factory
+):
     project = project_factory()
-    component_factory(
+    component = component_factory(
         project.id,
         name="Componente incluido",
         type_component="API",
         source_reference="catalog/components/demo",
     )
+    ticket = ticket_factory(project.id, components=[(component, 1)])
 
     response = client.get(f"/projects/{project.id}")
 
     assert response.status_code == 200
-    assert response.json()["components"][0]["type_component"] == "API"
-    assert response.json()["components"][0]["source_reference"] == "catalog/components/demo"
+    project_detail = response.json()
+    assert project_detail["components"][0]["type_component"] == "API"
+    assert project_detail["components"][0]["source_reference"] == "catalog/components/demo"
+    assert project_detail["tickets"][0]["id"] == ticket.id
+    assert project_detail["tickets"][0]["changes"][0]["component_id"] == component.id
 
 
 def test_create_duplicate_project_returns_conflict(client, project_factory):

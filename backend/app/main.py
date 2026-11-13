@@ -16,7 +16,7 @@ from app.models.file_record import FileRecord
 from app.models.project import Project
 from app.models.ticket import Ticket
 
-from app.schemas.project import ProjectCreate, ProjectResponse
+from app.schemas.project import ProjectCreate, ProjectResponse, ProjectDetailResponse
 from app.schemas.component import ComponentCreate, ComponentResponse
 from app.schemas.ticket import TicketCreate, TicketResponse, TicketUpdate
 from app.schemas.change import ChangeCreate, ChangeResponse, ChangeUpdate
@@ -96,17 +96,27 @@ def hello():
 def list_projects(
     db: Session = Depends(get_db)
     ):
-    statement = select(Project).order_by(Project.id).options(selectinload(Project.components))
+    statement = select(Project).order_by(Project.id)
     projects = db.scalars(statement).all()
 
     return projects
 
-@app.get("/projects/{project_id}", response_model=ProjectResponse)
+@app.get("/projects/{project_id}", response_model=ProjectDetailResponse)
 def get_project(
     project_id: int,
     db: Session = Depends(get_db)
     ):
-    statement = select(Project).where(Project.id == project_id).options(selectinload(Project.components))
+    statement = (
+        select(Project)
+        .where(Project.id == project_id)
+        .options(
+            selectinload(Project.components),
+            selectinload(Project.tickets)
+            .selectinload(Ticket.changes)
+            .selectinload(Change.files)
+            .selectinload(ChangeFile.file),
+        )
+    )
     project = db.scalars(statement).first()
 
     if not project:

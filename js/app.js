@@ -6,7 +6,7 @@
   const COMPONENT_TYPES = ["PC1", "Reporte", "Carrier", "API", "Batch", "Seguridad", "other"];
   const state = {
     projects: [],
-    ticketsByProject: new Map(),
+    projectDetailsById: new Map(),
     selectedProjectId: "",
     selectedCategory: "",
     selectedComponentId: null,
@@ -131,11 +131,13 @@
   }
 
   function currentProject() {
-    return state.projects.find(project => String(project.id) === state.selectedProjectId) || null;
+    return state.projectDetailsById.get(state.selectedProjectId) ||
+      state.projects.find(project => String(project.id) === state.selectedProjectId) ||
+      null;
   }
 
   function projectTickets(projectId = state.selectedProjectId) {
-    return state.ticketsByProject.get(String(projectId)) || [];
+    return state.projectDetailsById.get(String(projectId))?.tickets || [];
   }
 
   function componentType(component) {
@@ -164,8 +166,8 @@
   }
 
   function allChanges() {
-    return [...state.ticketsByProject.values()].flatMap(tickets =>
-      tickets.flatMap(ticket => (ticket.changes || []).map(change => ({ ...change, ticket })))
+    return projectTickets().flatMap(ticket =>
+      (ticket.changes || []).map(change => ({ ...change, ticket }))
     );
   }
 
@@ -175,11 +177,10 @@
     try {
       const projects = await api("/projects");
       state.projects = projects;
+      state.projectDetailsById = new Map();
 
-      // Comprobar si existen proyectos
       if (!projects || projects.length === 0) {
-        state.ticketsByProject = new Map();
-
+        state.selectedProjectId = "";
         setConnection(true);
         renderProjectOptions();
         renderStats();
@@ -193,26 +194,15 @@
         return;
       }
 
-      const ticketResults = await Promise.all(
-        projects.map(async project => {
-          const tickets = await api(`/projects/${project.id}/tickets`);
-          return [String(project.id), tickets];
-        })
-      );
-
-      state.ticketsByProject = new Map(ticketResults);
-
       setConnection(true);
       renderProjectOptions();
       renderStats();
       renderCategories();
       renderComponents();
 
-      const project = currentProject();
-
-      $("projectDescription").textContent = project
-        ? `${project.cust_num == null ? "" : `CustNum: ${project.cust_num} · `}${project.description || ""}`
-        : "";
+      if (state.selectedProjectId) {
+        await loadProjectDetails(state.selectedProjectId);
+      }
 
     } catch (error) {
       setConnection(false, error.message);
@@ -221,6 +211,23 @@
       $("projectSelectionPrompt").textContent =
         `No se pudo cargar el catálogo. Comprueba que el backend esté activo (${API_BASE}) y vuelve a intentar.`;
     }
+  }
+
+  async function loadProjectDetails(projectId) {
+    const project = await api(`/projects/${projectId}`);
+    if (!Array.isArray(project.components) || !Array.isArray(project.tickets)) {
+      throw new Error("La API devolvió un detalle de proyecto inválido.");
+    }
+
+    const id = String(projectId);
+    state.projectDetailsById.set(id, project);
+    if (state.selectedProjectId === id) {
+      renderProjectOptions();
+      renderStats();
+      renderCategories();
+      renderComponents();
+    }
+    return project;
   }
 
 
@@ -233,8 +240,9 @@
       ).join("");
     select.value = state.projects.some(project => String(project.id) === selected) ? selected : "";
     state.selectedProjectId = select.value;
-    $("updateComponentsBtn").disabled = !state.selectedProjectId;
-    $("createTicketBtn").disabled = !state.selectedProjectId;
+    const hasDetails = state.projectDetailsById.has(state.selectedProjectId);
+    $("updateComponentsBtn").disabled = !hasDetails;
+    $("createTicketBtn").disabled = !hasDetails;
     $("projectElementsView").hidden = !state.selectedProjectId;
     $("projectSelectionPrompt").hidden = Boolean(state.selectedProjectId);
     const project = currentProject();
@@ -244,8 +252,8 @@
   }
 
   function renderStats() {
-    const components = state.projects.flatMap(project => project.components || []);
-    const tickets = [...state.ticketsByProject.values()].flat();
+    const components = currentProject()?.components || [];
+    const tickets = projectTickets();
     $("projectCount").textContent = state.projects.length;
     $("componentCount").textContent = components.length;
     $("ticketCount").textContent = tickets.length;
@@ -257,7 +265,7 @@
   function renderCategories() {
     const project = currentProject();
     const components = project?.components || [];
-    const disabled = project ? "" : " disabled";
+    const disabled = state.projectDetailsById.has(state.selectedProjectId) ? "" : " disabled";
     if (state.selectedCategory && !COMPONENT_TYPES.includes(state.selectedCategory)) {
       state.selectedCategory = "";
     }
@@ -292,6 +300,13 @@
       $("componentRows").innerHTML = "";
       $("emptyState").hidden = true;
       $("componentSummary").textContent = "";
+      return;
+    }
+
+    if (!state.projectDetailsById.has(state.selectedProjectId)) {
+      $("componentRows").innerHTML = "";
+      $("emptyState").hidden = true;
+      $("componentSummary").textContent = "Cargando componentes y tickets…";
       return;
     }
 
@@ -352,7 +367,7 @@
   }
 
   async function showComponent(componentId) {
-    const component = currentProject()?.components.find(item => item.id === componentId);
+    const component = (currentProject()?.components || []).find(item => item.id === componentId);
     if (!component) return;
     state.selectedComponentId = componentId;
     renderComponentDetail(component);
@@ -637,17 +652,17 @@
   $("projectFilter").addEventListener("change", async event => {
     state.selectedProjectId = event.target.value;
     state.selectedCategory = "";
+    state.projectDetailsById.delete(state.selectedProjectId);
     $("projectDescription").textContent = currentProject()?.description || "";
     renderProjectOptions();
+    renderStats();
     renderCategories();
     renderComponents();
-    if (currentProject() && !state.ticketsByProject.has(state.selectedProjectId)) {
+    if (state.selectedProjectId) {
       try {
-        const tickets = await api(`/projects/${state.selectedProjectId}/tickets`);
-        state.ticketsByProject.set(state.selectedProjectId, tickets);
-        renderStats();
-        renderComponents();
+        await loadProjectDetails(state.selectedProjectId);
       } catch (error) {
+        $("componentSummary").textContent = "No se pudieron cargar los componentes y tickets.";
         showToast(error.message, true);
       }
     }

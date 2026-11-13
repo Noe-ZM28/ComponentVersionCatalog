@@ -1,5 +1,6 @@
 from pydantic import BaseModel, Field, ConfigDict
 from .component import ComponentResponse
+from .ticket import TicketResponse
 
 
 class ProjectCreate(BaseModel):
@@ -13,6 +14,16 @@ class ProjectResponse(BaseModel):
     description: str
     cust_num: int | None = None
     is_active: bool
+
+    model_config = ConfigDict(from_attributes=True)
+
+class ProjectDetailResponse(BaseModel):
+    id: int
+    name: str
+    description: str
+    cust_num: int | None = None
+    is_active: bool
     components: list[ComponentResponse]
+    tickets: list[TicketResponse]
 
     model_config = ConfigDict(from_attributes=True)
