@@ -11,7 +11,7 @@ class Project(Base):
     __tablename__ = "projects"
 
     id: Mapped[int] = mapped_column(primary_key=True)
-    name: Mapped[str] = mapped_column(String(150), unique=True, index=True)
+    name: Mapped[str] = mapped_column(String(150), index=True)
     description: Mapped[str] = mapped_column(Text, nullable=False)
     cust_num: Mapped[int | None] = mapped_column(Integer, unique=True, index=True, nullable=True)
     is_active: Mapped[bool] = mapped_column(Boolean, default=True, nullable=False)
