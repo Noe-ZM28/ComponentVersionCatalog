@@ -4,14 +4,8 @@ from sqlalchemy.orm import DeclarativeBase, sessionmaker
 from app.config import settings
 
 
-def get_connect_args(database_url: str) -> dict:
-    if database_url.startswith("sqlite"):
-        return {"check_same_thread": False}
-    return {}
-
 engine = create_engine(
     settings.database_url,
-    connect_args=get_connect_args(settings.database_url),
     pool_pre_ping=True,
 )
 
@@ -27,7 +21,6 @@ ExternalSessionLocal = None
 if settings.external_database_url:
     external_engine = create_engine(
         settings.external_database_url,
-        connect_args=get_connect_args(settings.external_database_url),
         pool_pre_ping=True,
     )
 

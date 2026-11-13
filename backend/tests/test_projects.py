@@ -1,7 +1,7 @@
 def test_health_and_root_endpoints(client):
     assert client.get("/health").json()["status"] == "ok"
     assert client.get("/").status_code == 200
-    assert client.get("/about").json()["database"] == "SQLite"
+    assert client.get("/about").json()["database"] == "Microsoft SQL Server"
     assert client.get("/hello").status_code == 200
 
 

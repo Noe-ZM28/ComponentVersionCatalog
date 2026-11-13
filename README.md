@@ -27,7 +27,7 @@ La interfaz consume la API en el mismo origen. Los endpoints de escritura no inc
 `POST /catalog/seed-demo` carga el catálogo ficticio y, en cada llamada, crea entre 1 y 15 cambios adicionales con tickets, componentes o proyectos de demostración.
 
 ## Pruebas
-Ejecuta `python -m pytest backend\tests -q` desde la raíz del repositorio. La suite usa SQLite en memoria y almacenamiento temporal.
+Configura `TEST_DATABASE_URL` en `.env` con una base de pruebas desechable de SQL Server y ejecuta `python -m pytest backend\tests -q` desde la raíz del repositorio. La suite crea y elimina sus tablas en esa base.
 
 ## Estructura principal
 - `index.html`: interfaz de la aplicación.

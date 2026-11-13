@@ -1,25 +1,32 @@
 import os
 import sys
 from pathlib import Path
-from tempfile import gettempdir
 
 import pytest
 from fastapi.testclient import TestClient
-from sqlalchemy import create_engine, event
+from pydantic_settings import BaseSettings, SettingsConfigDict
+from sqlalchemy import create_engine
 from sqlalchemy.orm import sessionmaker
-from sqlalchemy.pool import StaticPool
 
 
 BACKEND_ROOT = Path(__file__).resolve().parents[1]
 if str(BACKEND_ROOT) not in sys.path:
     sys.path.insert(0, str(BACKEND_ROOT))
 
-# App settings are loaded when app.database is imported. Keep that module's
-# engine isolated from developer or deployment database URLs during tests.
-os.environ["DATABASE_URL"] = "sqlite://"
-os.environ["STORAGE_PATH"] = str(
-    Path(gettempdir()) / "component-version-catalog-test-files"
-)
+
+class TestSettings(BaseSettings):
+    test_database_url: str
+
+    model_config = SettingsConfigDict(
+        env_file=str(BACKEND_ROOT.parent / ".env"),
+        env_file_encoding="utf-8",
+        extra="ignore",
+        case_sensitive=False,
+    )
+
+
+test_settings = TestSettings()
+os.environ["DATABASE_URL"] = test_settings.test_database_url
 
 from app.database import Base, get_db
 from app.main import app
@@ -33,18 +40,8 @@ from app.services.file_service import settings
 
 @pytest.fixture
 def test_engine():
-    engine = create_engine(
-        "sqlite://",
-        connect_args={"check_same_thread": False},
-        poolclass=StaticPool,
-    )
-
-    @event.listens_for(engine, "connect")
-    def enable_foreign_keys(connection, _record):
-        cursor = connection.cursor()
-        cursor.execute("PRAGMA foreign_keys=ON")
-        cursor.close()
-
+    engine = create_engine(test_settings.test_database_url)
+    Base.metadata.drop_all(engine)
     Base.metadata.create_all(engine)
     yield engine
     Base.metadata.drop_all(engine)

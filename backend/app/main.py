@@ -69,7 +69,7 @@ def about():
     return {
         "project": "Component Version Catalog",
         "version": "0.1.0",
-        "database": "SQLite",
+        "database": "Microsoft SQL Server",
     }
 
 

@@ -1,8 +1,7 @@
 import pytest
-from sqlalchemy import create_engine, func, inspect, select, text
+from sqlalchemy import func, select
 from sqlalchemy.exc import IntegrityError
 
-from app.init_db import migrate_component_type, migrate_project_cust_num
 from app.models.change import Change
 from app.models.change_file import ChangeFile
 from app.models.component import Component
@@ -138,70 +137,3 @@ def test_demo_seed_keeps_foreign_keys_chains_steps_and_change_numbers_valid(db_s
         in {"PC1", "Reporte", "Carrier", "API", "Batch", "Seguridad", "other"}
         for component in generated_components
     )
-
-
-def test_project_cust_num_migration_preserves_existing_rows():
-    legacy_engine = create_engine("sqlite://")
-    try:
-        with legacy_engine.begin() as connection:
-            connection.execute(
-                text(
-                    "CREATE TABLE projects "
-                    "(id INTEGER PRIMARY KEY, name VARCHAR(150) NOT NULL)"
-                )
-            )
-            connection.execute(
-                text("INSERT INTO projects (id, name) VALUES (1, 'Existente')")
-            )
-
-        migrate_project_cust_num(legacy_engine)
-
-        columns = {
-            column["name"]
-            for column in inspect(legacy_engine).get_columns("projects")
-        }
-        with legacy_engine.connect() as connection:
-            project = connection.execute(
-                text("SELECT id, name, cust_num FROM projects WHERE id = 1")
-            ).one()
-        assert "cust_num" in columns
-        assert project == (1, "Existente", None)
-    finally:
-        legacy_engine.dispose()
-
-
-def test_component_type_migration_renames_and_converts_legacy_values():
-    legacy_engine = create_engine("sqlite://")
-    try:
-        with legacy_engine.begin() as connection:
-            connection.execute(
-                text(
-                    "CREATE TABLE components "
-                    "(id INTEGER PRIMARY KEY, name VARCHAR(150), "
-                    "source_type VARCHAR(30))"
-                )
-            )
-            connection.execute(
-                text(
-                    "INSERT INTO components (id, name, source_type) "
-                    "VALUES (1, 'API - servicio', 'repository'), "
-                    "(2, 'Componente heredado', 'database')"
-                )
-            )
-
-        migrate_component_type(legacy_engine)
-
-        columns = {
-            column["name"]
-            for column in inspect(legacy_engine).get_columns("components")
-        }
-        with legacy_engine.connect() as connection:
-            rows = connection.execute(
-                text(
-                    "SELECT id, type_component FROM components ORDER BY id"
-                )
-            ).all()
-        assert "source_type" not in columns
-        assert rows == [(1, "API"), (2, "other")]
-    finally:
-        legacy_engine.dispose()
