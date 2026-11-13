@@ -107,25 +107,34 @@
         <div class="dialog-actions"><button class="btn" id="dialogCancel" type="button">Cancelar</button><button class="btn primary" id="dialogSubmit" type="submit">Guardar</button></div>
       </form>
     </dialog>
-    <dialog id="projectUpdateDialog" class="entity-dialog update-summary-dialog" aria-labelledby="projectUpdateTitle">
-      <div class="update-summary-body">
-        <div class="section-head">
-          <div><div class="eyebrow">Sincronización</div><h2 id="projectUpdateTitle">Resultado de actualización de proyectos</h2></div>
-          <button class="icon-button" id="projectUpdateClose" type="button" aria-label="Cerrar">×</button>
+    <section id="projectUpdateDialog" class="component-update-overlay" role="dialog" aria-modal="true" aria-labelledby="projectUpdateTitle" hidden>
+      <div class="entity-dialog update-summary-dialog component-update-panel">
+        <div class="update-summary-body">
+          <div class="section-head">
+            <div><div class="eyebrow">Sincronización</div><h2 id="projectUpdateTitle">Resultado de actualización de proyectos</h2></div>
+            <button class="icon-button" id="projectUpdateClose" type="button" aria-label="Cerrar" disabled>×</button>
+          </div>
+          <div id="projectUpdateProgress" class="component-update-progress" hidden>
+            <span class="component-update-spinner" aria-hidden="true"></span>
+            <p id="projectUpdateStatus" role="status">La sincronización está en curso. El resultado aparecerá aquí.</p>
+          </div>
+          <div id="projectUpdateResults" hidden>
+            <div class="update-summary-stats">
+              <article class="update-summary-stat added"><span>Añadidos</span><strong id="projectsAddedCount">0</strong></article>
+              <article class="update-summary-stat modified"><span>Modificados</span><strong id="projectsModifiedCount">0</strong></article>
+              <article class="update-summary-stat ignored"><span>Ignorados</span><strong id="projectsIgnoredCount">0</strong></article>
+            </div>
+            <div class="update-summary-lists">
+              <section><h3>Proyectos añadidos</h3><ul id="projectsAddedList"></ul></section>
+              <section><h3>Proyectos modificados</h3><ul id="projectsModifiedList"></ul></section>
+              <section><h3>Proyectos ignorados</h3><ul id="projectsIgnoredList"></ul></section>
+            </div>
+          </div>
+          <p id="projectUpdateError" class="notice" role="alert" hidden></p>
+          <div class="dialog-actions"><button class="btn primary" id="projectUpdateDone" type="button" hidden>Listo</button></div>
         </div>
-        <div class="update-summary-stats">
-          <article class="update-summary-stat added"><span>Añadidos</span><strong id="projectsAddedCount">0</strong></article>
-          <article class="update-summary-stat modified"><span>Modificados</span><strong id="projectsModifiedCount">0</strong></article>
-          <article class="update-summary-stat ignored"><span>Ignorados</span><strong id="projectsIgnoredCount">0</strong></article>
-        </div>
-        <div class="update-summary-lists">
-          <section><h3>Proyectos añadidos</h3><ul id="projectsAddedList"></ul></section>
-          <section><h3>Proyectos modificados</h3><ul id="projectsModifiedList"></ul></section>
-          <section><h3>Proyectos ignorados</h3><ul id="projectsIgnoredList"></ul></section>
-        </div>
-        <div class="dialog-actions"><button class="btn primary" id="projectUpdateDone" type="button">Listo</button></div>
       </div>
-    </dialog>
+    </section>
     <section id="componentUpdateDialog" class="component-update-overlay" role="dialog" aria-modal="true" aria-labelledby="componentUpdateTitle" hidden>
       <div class="entity-dialog update-summary-dialog component-update-panel">
         <div class="update-summary-body">
@@ -157,6 +166,6 @@
     <input id="fileInput" type="file" multiple hidden>
     <div class="toast" id="toast" role="status" aria-live="polite"></div>
   </div>
-  <script src="/js/app.js?v=4" defer></script>
+  <script src="/js/app.js?v=5" defer></script>
 </body>
 </html>

@@ -69,7 +69,36 @@
         : "<li>Ninguno</li>";
     });
 
-    $("projectUpdateDialog").showModal();
+    $("projectUpdateTitle").textContent = "Resultado de actualización de proyectos";
+    $("projectUpdateProgress").hidden = true;
+    $("projectUpdateResults").hidden = false;
+    $("projectUpdateError").hidden = true;
+    $("projectUpdateDone").hidden = false;
+    $("projectUpdateClose").disabled = false;
+    $("projectUpdateDialog").hidden = false;
+  }
+
+  function showProjectUpdateProgress() {
+    $("projectUpdateTitle").textContent = "Sincronizando proyectos";
+    $("projectUpdateStatus").textContent = "La sincronización está en curso. El resultado aparecerá aquí.";
+    $("projectUpdateProgress").hidden = false;
+    $("projectUpdateResults").hidden = true;
+    $("projectUpdateError").hidden = true;
+    $("projectUpdateDone").hidden = true;
+    $("projectUpdateClose").disabled = true;
+    $("projectUpdateDialog").hidden = false;
+  }
+
+  function showProjectUpdateError(error) {
+    $("projectUpdateTitle").textContent = "No se pudieron sincronizar los proyectos";
+    $("projectUpdateProgress").hidden = true;
+    $("projectUpdateResults").hidden = true;
+    const errorMessage = $("projectUpdateError");
+    errorMessage.textContent = error.message || "No fue posible completar la sincronización.";
+    errorMessage.hidden = false;
+    $("projectUpdateDone").hidden = false;
+    $("projectUpdateClose").disabled = false;
+    $("projectUpdateDialog").hidden = false;
   }
 
   function showComponentUpdateSummary(summary) {
@@ -467,25 +496,28 @@
   $("updateProjectsBtn").addEventListener("click", async () => {
     const button = $("updateProjectsBtn");
     button.disabled = true;
+    showProjectUpdateProgress();
     try {
       const summary = await api("/projects/update", { method: "POST" });
       showProjectUpdateSummary(summary);
       await loadCatalog();
     } catch (error) {
-      showToast(error.message, true);
+      showProjectUpdateError(error);
     } finally {
       button.disabled = false;
     }
   });
 
   function closeProjectUpdateDialog() {
-    $("projectUpdateDialog").close();
+    $("projectUpdateDialog").hidden = true;
   }
 
   $("projectUpdateClose").addEventListener("click", closeProjectUpdateDialog);
   $("projectUpdateDone").addEventListener("click", closeProjectUpdateDialog);
   $("projectUpdateDialog").addEventListener("click", event => {
-    if (event.target === $("projectUpdateDialog")) closeProjectUpdateDialog();
+    if (event.target === $("projectUpdateDialog") && !$("projectUpdateClose").disabled) {
+      closeProjectUpdateDialog();
+    }
   });
 
   function closeComponentUpdateDialog() {
