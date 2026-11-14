@@ -17,7 +17,7 @@ class Component(Base):
     description: Mapped[str] = mapped_column(Text, nullable=False)
 
     # Ubicación actual del componente.
-    ref_id: Mapped[str | None] = mapped_column(String(100), unique=True, nullable=True)
+    ref_id: Mapped[str | None] = mapped_column(String(100), nullable=True)
 
     last_modified_at: Mapped[datetime] = mapped_column(
         DateTime(timezone=True),
