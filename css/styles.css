@@ -335,6 +335,12 @@ tbody tr:last-child td {
     margin-top: 2px
 }
 
+.latest-change {
+    display: flex;
+    align-items: center;
+    gap: 8px
+}
+
 .pill {
     display: inline-flex;
     align-items: center;
@@ -1430,6 +1436,75 @@ W
     padding: 22px
 }
 
+.project-tickets-dialog {
+    width: min(900px, calc(100vw - 28px))
+}
+
+.project-tickets-layout {
+    display: grid;
+    grid-template-columns: minmax(220px, .8fr) minmax(0, 1.2fr);
+    gap: 20px
+}
+
+.project-tickets-layout h3 {
+    margin: 0 0 10px
+}
+
+.project-ticket-list,
+.project-ticket-changes {
+    display: grid;
+    align-content: start;
+    gap: 8px;
+    max-height: min(58vh, 560px);
+    overflow: auto
+}
+
+.project-ticket-option {
+    width: 100%;
+    padding: 11px 12px;
+    border: 1px solid var(--line);
+    border-radius: 9px;
+    background: var(--panel);
+    color: var(--text);
+    text-align: left;
+    cursor: pointer
+}
+
+.project-ticket-option:hover,
+.project-ticket-option[aria-pressed="true"] {
+    border-color: var(--blue);
+    background: var(--blue-soft)
+}
+
+.project-ticket-option strong,
+.project-ticket-option span {
+    display: block
+}
+
+.project-ticket-option span,
+.project-ticket-meta {
+    margin-top: 4px;
+    color: var(--muted);
+    font-size: 12px
+}
+
+.project-ticket-change {
+    padding: 12px;
+    border: 1px solid var(--line);
+    border-radius: 9px;
+    background: var(--panel)
+}
+
+.project-ticket-change h4 {
+    margin: 0 0 5px
+}
+
+.project-ticket-change p {
+    margin: 5px 0 0;
+    color: var(--muted);
+    overflow-wrap: anywhere
+}
+
 .update-summary-dialog .section-head {
     margin-bottom: 20px
 }
@@ -1620,6 +1695,10 @@ W
 }
 
 @media (max-width: 760px) {
+    .project-tickets-layout {
+        grid-template-columns: 1fr
+    }
+
     .page-heading,
     .detail-title-row {
         align-items: stretch;

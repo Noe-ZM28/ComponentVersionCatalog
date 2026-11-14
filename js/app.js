@@ -271,6 +271,7 @@
     state.selectedProjectId = select.value;
     const hasDetails = state.projectDetailsById.has(state.selectedProjectId);
     $("updateComponentsBtn").disabled = !hasDetails;
+    $("viewTicketsBtn").disabled = !hasDetails;
     $("createTicketBtn").disabled = !hasDetails;
     $("projectElementsView").hidden = !state.selectedProjectId;
     $("projectSelectionPrompt").hidden = Boolean(state.selectedProjectId);
@@ -289,6 +290,57 @@
     $("changeCount").textContent = tickets.reduce(
       (count, ticket) => count + (ticket.changes || []).length, 0
     );
+  }
+
+  function renderProjectTickets(ticketId = null) {
+    const project = currentProject();
+    const tickets = projectTickets();
+    $("projectTicketsTitle").textContent = `Tickets de ${project?.name || "este proyecto"}`;
+    $("projectTicketsList").innerHTML = tickets.length
+      ? tickets.map(ticket => {
+        const changeCount = (ticket.changes || []).length;
+        return `<button class="project-ticket-option" type="button" data-project-ticket="${ticket.id}" aria-pressed="${String(ticket.id) === String(ticketId)}">
+          <strong>${escapeHtml(ticket.ticket_key)}</strong>
+          <span>${escapeHtml(ticket.title)}</span>
+          <span>${changeCount} ${changeCount === 1 ? "cambio" : "cambios"}</span>
+        </button>`;
+      }).join("")
+      : '<p class="small muted">Este proyecto todavía no tiene tickets.</p>';
+    $("projectTicketChanges").innerHTML = '<p class="small muted">Selecciona un ticket para consultar sus cambios.</p>';
+
+    if (ticketId !== null) {
+      showProjectTicketChanges(ticketId);
+    }
+  }
+
+  function showProjectTicketChanges(ticketId) {
+    const ticket = projectTickets().find(item => String(item.id) === String(ticketId));
+    if (!ticket) return;
+
+    $("projectTicketsList").querySelectorAll("[data-project-ticket]").forEach(button => {
+      button.setAttribute("aria-pressed", String(button.dataset.projectTicket) === String(ticket.id));
+    });
+
+    const components = currentProject()?.components || [];
+    const changes = [...(ticket.changes || [])].sort(
+      (left, right) => left.change_number - right.change_number
+    );
+    $("projectTicketChanges").innerHTML = `
+      <div class="project-ticket-meta">
+        <div>${ticketLink(ticket)}</div>
+        <div>${escapeHtml(ticket.description || "")}</div>
+      </div>
+      ${changes.length
+        ? changes.map(change => {
+          const component = components.find(item => item.id === change.component_id);
+          return `<article class="project-ticket-change">
+            <h4>#${escapeHtml(change.change_number)} · ${escapeHtml(change.title)}</h4>
+            <div class="project-ticket-meta">${escapeHtml(component?.name || `Componente ${change.component_id}`)} · ${formatDate(change.created_at)}</div>
+            <p>${escapeHtml(change.description)}</p>
+          </article>`;
+        }).join("")
+        : '<p class="small muted">Este ticket no tiene cambios asociados.</p>'}
+    `;
   }
 
   function renderCategories() {
@@ -355,7 +407,14 @@
         <td><button class="text-button component-name" type="button" data-open-component="${component.id}">${escapeHtml(component.name)}</button><div class="subline">${escapeHtml(component.type_component || "other")}${component.source_reference ? ` · ${escapeHtml(component.source_reference)}` : ""}</div></td>
         <td>${escapeHtml(component.ref_id || "—")}</td>
         <td>${escapeHtml(componentType(component))}</td>
-        <td>${latest ? `<strong>#${latest.change_number}</strong><div class="subline">${ticketLink(latest.ticket)}</div>` : "—"}</td>
+        <td>
+          ${latest
+            ? `<div class="latest-change">
+                <strong>#${latest.change_number}</strong>
+                ${ticketLink(latest.ticket)}
+              </div>`
+            : "—"}
+        </td>
         <td><button class="btn small" type="button" data-open-component="${component.id}">Ver</button></td>
       </tr>`;
     }).join("");
@@ -553,6 +612,17 @@
       <div id="changeEntries" class="form-field full">${changeEntry(0)}</div>
       <div class="form-field full">${addChangeEntryButton()}</div>
     </div>`, "Registrar", "Catálogo", "ticket");
+  });
+
+  $("viewTicketsBtn").addEventListener("click", () => {
+    if (!state.projectDetailsById.has(state.selectedProjectId)) return;
+    renderProjectTickets();
+    $("projectTicketsDialog").showModal();
+  });
+  $("projectTicketsClose").addEventListener("click", () => $("projectTicketsDialog").close());
+  $("projectTicketsList").addEventListener("click", event => {
+    const button = event.target.closest("[data-project-ticket]");
+    if (button) showProjectTicketChanges(button.dataset.projectTicket);
   });
 
   $("addChangeBtn").addEventListener("click", () => {

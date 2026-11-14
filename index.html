@@ -47,6 +47,7 @@
             </select>
             <p id="projectDescription" class="small muted"></p>
             <button class="btn" id="updateComponentsBtn" type="button" disabled>Actualizar componentes</button>
+            <button class="btn" id="viewTicketsBtn" type="button" disabled>Ver tickets</button>
             <button class="btn" id="createTicketBtn" type="button" disabled>＋ Registrar ticket</button>
           </section>
           <section class="panel">
@@ -107,6 +108,26 @@
         <div class="dialog-actions"><button class="btn" id="dialogCancel" type="button">Cancelar</button><button class="btn primary" id="dialogSubmit" type="submit">Guardar</button></div>
       </form>
     </dialog>
+    <dialog id="projectTicketsDialog" class="entity-dialog project-tickets-dialog" aria-labelledby="projectTicketsTitle">
+      <div class="update-summary-body">
+        <div class="section-head">
+          <div><div class="eyebrow">Proyecto seleccionado</div><h2 id="projectTicketsTitle">Tickets del proyecto</h2></div>
+          <button class="icon-button" id="projectTicketsClose" type="button" aria-label="Cerrar">×</button>
+        </div>
+        <div class="project-tickets-layout">
+          <section aria-labelledby="projectTicketsListTitle">
+            <h3 id="projectTicketsListTitle">Tickets</h3>
+            <div id="projectTicketsList" class="project-ticket-list"></div>
+          </section>
+          <section aria-labelledby="projectTicketChangesTitle">
+            <h3 id="projectTicketChangesTitle">Cambios del ticket</h3>
+            <div id="projectTicketChanges" class="project-ticket-changes">
+              <p class="small muted">Selecciona un ticket para consultar sus cambios.</p>
+            </div>
+          </section>
+        </div>
+      </div>
+    </dialog>
     <section id="projectUpdateDialog" class="component-update-overlay" role="dialog" aria-modal="true" aria-labelledby="projectUpdateTitle" hidden>
       <div class="entity-dialog update-summary-dialog component-update-panel">
         <div class="update-summary-body">
@@ -166,6 +187,6 @@
     <input id="fileInput" type="file" multiple hidden>
     <div class="toast" id="toast" role="status" aria-live="polite"></div>
   </div>
-  <script src="/js/app.js?v=5" defer></script>
+  <script src="/js/app.js?v=6" defer></script>
 </body>
 </html>
