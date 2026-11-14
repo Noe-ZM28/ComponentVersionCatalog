@@ -2,7 +2,7 @@ def test_create_ticket_creates_changes_with_component_location(
     client, project_factory, component_factory
 ):
     project = project_factory()
-    component = component_factory(project.id, cadena="PAY", step=7)
+    component = component_factory(project.id)
 
     response = client.post(
         f"/projects/{project.id}/tickets",
@@ -24,8 +24,6 @@ def test_create_ticket_creates_changes_with_component_location(
     assert response.status_code == 201
     ticket = response.json()
     assert ticket["changes"][0]["change_number"] == 1
-    assert ticket["changes"][0]["cadena"] == "PAY"
-    assert ticket["changes"][0]["step"] == 7
 
 
 def test_create_ticket_with_multiple_changes_same_component_numbers_consecutively(

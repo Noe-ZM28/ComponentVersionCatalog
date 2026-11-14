@@ -201,8 +201,6 @@ def create_component(
         project_id=project_id,
         name=component_data.name,
         description=component_data.description,
-        cadena=component_data.cadena,
-        step=component_data.step,
         ref_id=component_data.ref_id,
         type_component=component_data.type_component,
         source_reference=component_data.source_reference,
@@ -277,8 +275,6 @@ def create_ticket(
             change_number=change_number,
             title=change.title,
             description=change.description,
-            cadena=component.cadena,
-            step=component.step,
         )
         changes.append(new_change)
 
@@ -407,8 +403,6 @@ def update_change(
 
         max_change_number = db.query(func.max(Change.change_number)).filter(Change.component_id == exist_component.id).scalar()
         change.change_number=max_change_number + 1 if max_change_number is not None else 1
-        change.cadena=exist_component.cadena
-        change.step=exist_component.step
 
     for key, value in changes_to_apply.items():
         setattr(change, key, value)
@@ -472,8 +466,6 @@ def add_changes_to_ticket(
             change_number=next_number,
             title=change_data.title,
             description=change_data.description,
-            cadena=component.cadena,
-            step=component.step,
         )
         changes_to_add.append(new_change)
 

@@ -343,7 +343,7 @@
     const list = (project.components || []).filter(component => {
       const matchesCategory = !state.selectedCategory || componentType(component) === state.selectedCategory;
       const matchesSearch = !search ||
-        `${component.name} ${component.description} ${component.cadena} ${component.ref_id || ""}`.toLocaleLowerCase().includes(search);
+        `${component.name} ${component.description} ${component.ref_id || ""}`.toLocaleLowerCase().includes(search);
       return matchesCategory && matchesSearch;
     }).sort((left, right) => left.name.localeCompare(right.name, "es"));
 
@@ -354,7 +354,6 @@
       return `<tr>
         <td><button class="text-button component-name" type="button" data-open-component="${component.id}">${escapeHtml(component.name)}</button><div class="subline">${escapeHtml(component.type_component || "other")}${component.source_reference ? ` · ${escapeHtml(component.source_reference)}` : ""}</div></td>
         <td>${escapeHtml(component.ref_id || "—")}</td>
-        <td><strong>${escapeHtml(component.cadena)}</strong><span class="muted"> / ${escapeHtml(component.step)}</span></td>
         <td>${escapeHtml(componentType(component))}</td>
         <td>${latest ? `<strong>#${latest.change_number}</strong><div class="subline">${ticketLink(latest.ticket)}</div>` : "—"}</td>
         <td><button class="btn small" type="button" data-open-component="${component.id}">Ver</button></td>
@@ -374,13 +373,10 @@
     $("detailView").classList.add("active");
     $("detailCategory").textContent = `${project?.name || "Proyecto"} · ${componentType(component)}`;
     $("detailName").textContent = component.name;
-    $("detailSubtitle").textContent = `${component.cadena} · Paso ${component.step}`;
     $("detailId").textContent = `ID ${component.id}`;
     $("detailGrid").innerHTML = [
       ["Proyecto", project?.name],
       ["RefID", component.ref_id || "—"],
-      ["Cadena", component.cadena],
-      ["Paso", component.step],
       ["Tipo de componente", component.type_component || "other"],
       ["Referencia", component.source_reference || "Sin referencia"],
       ["Cambios registrados", changes.length]
@@ -410,7 +406,6 @@
         <div class="history-ticket"><span class="history-ticket-label">Ticket</span>${ticketLink(ticket)}<span class="small muted">${escapeHtml(ticket.title)}</span></div>
         <h3>${escapeHtml(change.title)}</h3>
         <p class="history-desc">${escapeHtml(change.description)}</p>
-        <div class="small muted">${escapeHtml(change.cadena)} · Paso ${escapeHtml(change.step)}</div>
         <button class="btn small edit-change-btn" type="button" data-edit-change="${change.id}">Editar cambio</button>
       </div>
     </article>`;
@@ -649,8 +644,6 @@
           body: JSON.stringify({
             name: form.get("name"),
             description: form.get("description"),
-            cadena: form.get("cadena"),
-            step: Number(form.get("step")),
             ref_id: form.get("ref_id") || null,
             type_component: form.get("type_component"),
             source_reference: form.get("source_reference") || null

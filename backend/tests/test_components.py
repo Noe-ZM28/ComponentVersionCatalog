@@ -3,8 +3,6 @@ def test_create_component_preserves_all_fields(client, project_factory):
     payload = {
         "name": "Componente API",
         "description": "Integración del canal empresarial",
-        "cadena": "API",
-        "step": 25,
         "ref_id": "REF-API-001",
         "type_component": "API",
         "source_reference": "services/payment-api",
@@ -27,8 +25,6 @@ def test_create_component_for_missing_project_returns_not_found(client):
         json={
             "name": "No existe",
             "description": "Componente",
-            "cadena": "API",
-            "step": 1,
         },
     )
 
@@ -46,8 +42,6 @@ def test_duplicate_component_name_returns_conflict(
         json={
             "name": "Componente único",
             "description": "Duplicado",
-            "cadena": "API",
-            "step": 2,
         },
     )
 
@@ -62,8 +56,6 @@ def test_component_step_must_be_positive(client, project_factory):
         json={
             "name": "Paso inválido",
             "description": "Paso cero",
-            "cadena": "API",
-            "step": 0,
         },
     )
 
@@ -78,8 +70,6 @@ def test_component_type_must_be_an_enum_value(client, project_factory):
         json={
             "name": "Tipo inválido",
             "description": "Componente",
-            "cadena": "API",
-            "step": 1,
             "type_component": "repository",
         },
     )

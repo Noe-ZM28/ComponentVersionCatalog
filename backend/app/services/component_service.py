@@ -51,14 +51,9 @@ def update_components_service(project_id: int, db: Session) -> dict:
             if current_project_component:
                 if (current_project_component.name != component["name"]
                     or current_project_component.description != component["description"]
-                    or current_project_component.cadena != component["cadena"]
-                    or current_project_component.step != component["step"]
-                    or current_project_component.type_component != component["type_component"]
-                    ):
+                    or current_project_component.type_component != component["type_component"]):
                     current_project_component.name = component["name"]
                     current_project_component.description = component["description"]
-                    current_project_component.cadena = component["cadena"]
-                    current_project_component.step = component["step"]
                     current_project_component.type_component = component["type_component"]
 
                     type_components["updated_components"].append(current_project_component)
@@ -71,8 +66,6 @@ def update_components_service(project_id: int, db: Session) -> dict:
                     project_id=project_id,
                     name=component["name"],
                     description=component["description"],
-                    cadena=component["cadena"],
-                    step=component["step"],
                     ref_id=component["ref_id"],
                     type_component=component["type_component"],
                     source_reference=None,

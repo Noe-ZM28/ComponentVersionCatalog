@@ -20,8 +20,6 @@ class ChangeResponse(BaseModel):
     ticket_id: int
     title: str
     description: str
-    cadena: str
-    step: int
     files: list[ChangeFileResponse]
 
     model_config = ConfigDict(from_attributes=True)

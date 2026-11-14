@@ -18,8 +18,6 @@ def test_component_name_is_unique_per_project(db_session, project_factory, compo
         project_id=project.id,
         name="Nombre único",
         description="Duplicado",
-        cadena="API",
-        step=2,
     )
     db_session.add(duplicate)
 
@@ -52,7 +50,6 @@ def test_change_number_is_unique_per_component(
             change_number=1,
             title="Duplicado",
             description="Número repetido",
-            cadena=component.cadena,
             step=component.step,
         )
     )

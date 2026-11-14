@@ -61,7 +61,7 @@ BEGIN
     SET NOCOUNT ON;
 
     SELECT
-        C.ref_id, C.[name], C.[description], C.cadena, C.step, C.last_modified_at, C.type_component
+        C.ref_id, C.[name], C.[description], C.last_modified_at, C.type_component
     FROM
         CDPDatabase.dbo.components AS C
     INNER JOIN 

@@ -21,11 +21,6 @@ class Change(Base):
     title: Mapped[str] = mapped_column(String(250))
     description: Mapped[str] = mapped_column(Text, nullable=False)
 
-    # Se conserva la ubicación que tenía el componente al registrar
-    # este cambio, aunque su ubicación actual cambie posteriormente.
-    cadena: Mapped[str] = mapped_column(String(150), nullable=False)
-    step: Mapped[int] = mapped_column(Integer, nullable=False)
-
     created_at: Mapped[datetime] = mapped_column(
         DateTime(timezone=True),
         default=utc_now,

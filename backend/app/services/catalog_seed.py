@@ -189,8 +189,6 @@ def _create_generated_changes(db: Session) -> dict[str, int]:
                     region=_BANK_REGION_BY_NAME.get(project.name)
                     or random.choice(tuple(_BANK_PROJECTS)),
                 ),
-                cadena=chain,
-                step=step,
                 ref_id=f"REF-{token}",
                 type_component=TypeComponent(category),
             )
@@ -257,8 +255,6 @@ def _create_generated_changes(db: Session) -> dict[str, int]:
                     change_number=change_number,
                     title=change_title,
                     description=change_description,
-                    cadena=component.cadena,
-                    step=component.step,
                     created_at=datetime.now(timezone.utc),
                 )
             ],
