@@ -37,44 +37,44 @@ def update_components_service(project_id: int, db: Session) -> dict:
             detail="El proyecto no tiene un CustNum asociado."
         )
 
-    list_components = get_component_list(str(project.cust_num))
+    list_type_components = get_component_list(str(project.cust_num))
 
-    if not list_components:
+    if not list_type_components:
         return type_components
 
     try:
-        for component in list_components:
+        for list_components in list_type_components:
+            for component in list_components:
+                generator = (d for d in project.components if d.ref_id == component["ref_id"])
+                current_project_component = next(generator, None)
 
-            generator = (d for d in project.components if d.ref_id == component["ref_id"])
-            current_project_component = next(generator, None)
+                if current_project_component:
+                    if (current_project_component.name != component["name"]
+                        or current_project_component.description != component["description"]
+                        or current_project_component.type_component != component["type_component"]):
+                        current_project_component.name = component["name"]
+                        current_project_component.description = component["description"]
+                        current_project_component.type_component = component["type_component"]
 
-            if current_project_component:
-                if (current_project_component.name != component["name"]
-                    or current_project_component.description != component["description"]
-                    or current_project_component.type_component != component["type_component"]):
-                    current_project_component.name = component["name"]
-                    current_project_component.description = component["description"]
-                    current_project_component.type_component = component["type_component"]
+                        type_components["updated_components"].append(current_project_component)
 
-                    type_components["updated_components"].append(current_project_component)
+                    else:
+                        type_components["skipped_components"].append(current_project_component)
 
                 else:
-                    type_components["skipped_components"].append(current_project_component)
+                    new_component = Component(
+                        project_id=project_id,
+                        name=component["name"],
+                        description=component["description"],
+                        ref_id=component["ref_id"],
+                        type_component=component["type_component"],
+                        source_reference=None,
+                        last_modified_at=component["last_modified_at"],
+                    )
 
-            else:
-                new_component = Component(
-                    project_id=project_id,
-                    name=component["name"],
-                    description=component["description"],
-                    ref_id=component["ref_id"],
-                    type_component=component["type_component"],
-                    source_reference=None,
-                    last_modified_at=component["last_modified_at"],
-                )
+                    project.components.append(new_component)
 
-                project.components.append(new_component)
-
-                type_components["new_components"].append(new_component)
+                    type_components["new_components"].append(new_component)
 
         if (type_components["new_components"] or type_components["updated_components"]):
             db.commit()
