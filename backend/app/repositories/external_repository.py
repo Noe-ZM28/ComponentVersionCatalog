@@ -33,21 +33,34 @@ def get_proyects_list() -> list[dict]:
     )
 
 def get_component_list(cust_num: str) -> list[list[dict[str, str]]]:
-    carriers = get_carrier_list(cust_num)
-    pc1 = get_pc1_list(cust_num)
+    variables = get_variables_list(cust_num)
+    dialogues = get_dialogues_list(cust_num)
+    scripts = get_scripts_list(cust_num)
+    recurringJobs = get_recurringJobs_list(cust_num)
 
-    return [carriers, pc1]
+    return [variables, dialogues, scripts, recurringJobs]
 
-def get_carrier_list(cust_num: str) -> list[dict[str, str]]:
+def get_variables_list(cust_num: str) -> list[dict[str, str]]:
     return exec_store_procedure(
-        "[CDSPLUS].[dbo].[GetListCarrier]",
+        "[CDSPLUS].[dbo].[SP_GetVariables]",
         {"cust_num": cust_num}
     )
 
-
-def get_pc1_list(cust_num: str) -> list[dict[str, str]]:
+def get_dialogues_list(cust_num: str) -> list[dict[str, str]]:
     return exec_store_procedure(
-        "[CDSPLUS].[dbo].[GetListPC1]",
+        "[CDSPLUS].[dbo].[SP_GetDialogues]",
+        {"cust_num": cust_num}
+    )
+
+def get_scripts_list(cust_num: str) -> list[dict[str, str]]:
+    return exec_store_procedure(
+        "[CDSPLUS].[dbo].[SP_GetScripts]",
+        {"cust_num": cust_num}
+    )
+
+def get_recurringJobs_list(cust_num: str) -> list[dict[str, str]]:
+    return exec_store_procedure(
+        "[CDSPLUS].[dbo].[SP_GetRecurringJobs]",
         {"cust_num": cust_num}
     )
 
