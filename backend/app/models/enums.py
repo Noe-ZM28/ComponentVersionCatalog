@@ -6,3 +6,4 @@ class TypeComponent(str, PyEnum):
     VARIABLE        = "Variable"
     SCRIPT          = "Script"
     RECURRING_JOB   = "Recurring Job"
+    OTHER = "other"
