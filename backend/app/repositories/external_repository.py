@@ -42,25 +42,25 @@ def get_component_list(cust_num: str) -> list[list[dict[str, str]]]:
 
 def get_variables_list(cust_num: str) -> list[dict[str, str]]:
     return exec_store_procedure(
-        "[CDSPLUS].[dbo].[SP_GetVariables]",
+        "[CDSPLUSP].[dbo].[SP_GetVariables]",
         {"CustNum": cust_num}
     )
 
 def get_dialogues_list(cust_num: str) -> list[dict[str, str]]:
     return exec_store_procedure(
-        "[CDSPLUS].[dbo].[SP_GetDialogues]",
+        "[CDSPLUSP].[dbo].[SP_GetDialogues]",
         {"CustNum": cust_num}
     )
 
 def get_scripts_list(cust_num: str) -> list[dict[str, str]]:
     return exec_store_procedure(
-        "[CDSPLUS].[dbo].[SP_GetScripts]",
+        "[CDSPLUSP].[dbo].[SP_GetScripts]",
         {"CustNum": cust_num}
     )
 
 def get_recurringJobs_list(cust_num: str) -> list[dict[str, str]]:
     return exec_store_procedure(
-        "[CDSPLUS].[dbo].[SP_GetRecurringJobs]",
+        "[CDSPLUSP].[dbo].[SP_GetRecurringJobs]",
         {"CustNum": cust_num}
     )
 
