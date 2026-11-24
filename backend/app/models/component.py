@@ -13,7 +13,7 @@ class Component(Base):
 
     id: Mapped[int] = mapped_column(primary_key=True)
     project_id: Mapped[int] = mapped_column(ForeignKey("projects.id"), index=True)
-    name: Mapped[str] = mapped_column(String(150), index=True)
+    name: Mapped[str] = mapped_column(String(150), nullable=False)
     description: Mapped[str] = mapped_column(Text, nullable=False)
 
     # Ubicación actual del componente.
