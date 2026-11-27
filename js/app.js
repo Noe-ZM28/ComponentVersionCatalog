@@ -3,8 +3,14 @@
 
   const API_BASE = (window.CVC_API_BASE || window.location.origin).replace(/\/+$/, "");
   const $ = id => document.getElementById(id);
-  const COMPONENT_TYPES = ["Dialogue", "Variable", "Script", "Recurring Job","other"];
-  const state = {
+  const COMPONENT_TYPES = [
+    "Dialogue", "Variable", "Script",
+    "Recurring Job", "Chain",
+    "Mapping", "File Definition",
+    "XML", "Sorting", "Split",
+    "Dictionary",   "other"];
+
+const state = {
     projects: [],
     projectDetailsById: new Map(),
     selectedProjectId: "",
