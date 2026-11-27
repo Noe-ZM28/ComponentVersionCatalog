@@ -16,9 +16,13 @@ def update_projects_service(db: Session) -> dict:
     if not list_projects:
         return type_projects
 
+    existing_projects = {
+        project.cust_num: project
+        for project in db.scalars(select(Project)).all()
+    }
+
     for project in list_projects:
-        statement = select(Project).where(Project.cust_num == project["cust_num"])
-        exist_project = db.scalars(statement).first()
+        exist_project = existing_projects.get(project["cust_num"])
 
         if exist_project:
             if (
@@ -36,6 +40,7 @@ def update_projects_service(db: Session) -> dict:
                 description=project["description"],
                 cust_num=project["cust_num"],
             )
+            existing_projects[project["cust_num"]] = new_project
             type_projects["new_projects"].append(new_project)
 
     if type_projects["new_projects"]:

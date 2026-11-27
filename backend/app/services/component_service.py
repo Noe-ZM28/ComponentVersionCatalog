@@ -1,5 +1,3 @@
-from datetime import datetime
-
 from fastapi import HTTPException
 from sqlalchemy import select
 from sqlalchemy.orm import Session, selectinload
@@ -42,11 +40,16 @@ def update_components_service(project_id: int, db: Session) -> dict:
     if not list_type_components:
         return type_components
 
+    components_by_ref_id = {
+        component.ref_id: component
+        for component in project.components
+        if component.ref_id is not None
+    }
+
     try:
         for list_components in list_type_components:
             for component in list_components:
-                generator = (d for d in project.components if d.ref_id == component["ref_id"])
-                current_project_component = next(generator, None)
+                current_project_component = components_by_ref_id.get(component["ref_id"])
 
                 if current_project_component:
                     if (current_project_component.name != component["name"]
@@ -73,6 +76,7 @@ def update_components_service(project_id: int, db: Session) -> dict:
                     )
 
                     project.components.append(new_component)
+                    components_by_ref_id[component["ref_id"]] = new_component
 
                     type_components["new_components"].append(new_component)
 
