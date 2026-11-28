@@ -58,12 +58,50 @@ _PROJECT_DESCRIPTIONS = (
     "Plataforma de intercambio y conciliacion bancaria para {region}.",
 )
 _GENERATED_COMPONENT_TYPES = (
-    ("PC1", "Configuracion de emision y personalizacion de tarjetas"),
-    ("Reporte", "Generacion y distribucion de reportes operativos"),
-    ("Carrier", "Integracion de paquetes y perfiles de personalizacion"),
-    ("API", "Exposicion de servicios de consulta e integracion"),
-    ("Batch", "Procesamiento y conciliacion de lotes"),
-    ("Seguridad", "Validacion de controles y politicas de acceso"),
+    (
+        TypeComponent.DIALOGUE,
+        "Administracion de dialogos de operacion y atencion",
+    ),
+    (
+        TypeComponent.VARIABLE,
+        "Configuracion de variables de ejecucion",
+    ),
+    (
+        TypeComponent.SCRIPT,
+        "Automatizacion de procesos mediante scripts",
+    ),
+    (
+        TypeComponent.RECURRING_JOB,
+        "Programacion de trabajos recurrentes",
+    ),
+    (
+        TypeComponent.CHAIN,
+        "Orquestacion de cadenas de procesos",
+    ),
+    (
+        TypeComponent.MAPPING,
+        "Mapeo y transformacion de datos",
+    ),
+    (
+        TypeComponent.FILE_DEFINITION,
+        "Definicion de estructuras de archivos",
+    ),
+    (
+        TypeComponent.XML,
+        "Generacion y validacion de plantillas XML",
+    ),
+    (
+        TypeComponent.SORTING,
+        "Configuracion de criterios de ordenamiento",
+    ),
+    (
+        TypeComponent.SPLIT,
+        "Separacion y distribucion de archivos",
+    ),
+    (
+        TypeComponent.DICTIONARY,
+        "Administracion de diccionarios de datos",
+    ),
 )
 _CHAIN_METHODS = {
     "AUT": "Autorizacion de transacciones",
@@ -118,7 +156,39 @@ def _create_generated_changes(db: Session) -> dict[str, int]:
     projects = list(db.scalars(select(Project).order_by(Project.id)).all())
     components = list(db.scalars(select(Component).order_by(Component.id)).all())
     existing_project_names = {project.name for project in projects}
-    change_count = random.randint(1, 50)
+    change_count = random.randint(20, 100)
+
+    def create_component_for_project(project: Project) -> Component:
+        category, purpose = random.choice(_GENERATED_COMPONENT_TYPES)
+        chain, method = random.choice(list(_CHAIN_METHODS.items()))
+        system = random.choice(
+            ("Switch Atlas", "Gateway Boreal", "Core Meridian", "Hub Nopal")
+        )
+        token = uuid4().hex[:12].upper()
+        component = Component(
+            project_id=project.id,
+            name=f"{category.value} - {chain} {token[:6]}",
+            description=random.choice(_COMPONENT_DESCRIPTIONS).format(
+                purpose=f"{purpose} ({method})",
+                system=system,
+                environment=random.choice(
+                    ("integracion", "certificacion", "preproduccion")
+                ),
+                volume=random.choice(("2,500", "8,000", "12,000")),
+                channel=random.choice(
+                    ("movil", "sucursal", "comercio", "empresarial")
+                ),
+                region=_BANK_REGION_BY_NAME.get(project.name)
+                or random.choice(tuple(_BANK_PROJECTS)),
+            ),
+            ref_id=f"REF-{token}",
+            type_component=category,
+        )
+        db.add(component)
+        db.flush()
+        components.append(component)
+        created["components"] += 1
+        return component
 
     for _ in range(change_count):
         if not projects:
@@ -166,45 +236,24 @@ def _create_generated_changes(db: Session) -> dict[str, int]:
             create_component = False
 
         if create_component:
-            category, purpose = random.choice(_GENERATED_COMPONENT_TYPES)
-            chain, method = random.choice(list(_CHAIN_METHODS.items()))
-            step = random.randint(1, 99)
-            system = random.choice(
-                ("Switch Atlas", "Gateway Boreal", "Core Meridian", "Hub Nopal")
-            )
-            component_name = f"{category} - {chain} {token[:6]}"
-            component = Component(
-                project_id=project.id,
-                name=component_name,
-                description=random.choice(_COMPONENT_DESCRIPTIONS).format(
-                    purpose=f"{purpose} ({method})",
-                    system=system,
-                    environment=random.choice(
-                        ("integracion", "certificacion", "preproduccion")
-                    ),
-                    volume=random.choice(("2,500", "8,000", "12,000")),
-                    channel=random.choice(
-                        ("movil", "sucursal", "comercio", "empresarial")
-                    ),
-                    region=_BANK_REGION_BY_NAME.get(project.name)
-                    or random.choice(tuple(_BANK_PROJECTS)),
-                ),
-                ref_id=f"REF-{token}",
-                type_component=TypeComponent(category),
-            )
-            db.add(component)
-            db.flush()
-            components.append(component)
-            created["components"] += 1
+            component = create_component_for_project(project)
 
-        change_number = (
-            db.scalar(
-                select(func.max(Change.change_number)).where(
-                    Change.component_id == component.id
-                )
-            )
-            or 0
-        ) + 1
+        project_components = [
+            candidate
+            for candidate in components
+            if candidate.project_id == project.id
+        ]
+        ticket_component_count = random.randint(2, 15)
+        while len(project_components) < ticket_component_count:
+            created_component = create_component_for_project(project)
+            project_components.append(created_component)
+
+        ticket_components = random.sample(
+            project_components,
+            ticket_component_count,
+        )
+        if component not in ticket_components:
+            ticket_components[0] = component
         area = random.choice(
             ("autorizaciones", "liquidaciones", "perfiles", "conciliaciones", "notificaciones")
         )
@@ -240,6 +289,26 @@ def _create_generated_changes(db: Session) -> dict[str, int]:
             **component_context
         )
         ticket_key = f"DEMO-{token}"
+        generated_changes = []
+        for ticket_component in ticket_components:
+            change_number = (
+                db.scalar(
+                    select(func.max(Change.change_number)).where(
+                        Change.component_id == ticket_component.id
+                    )
+                )
+                or 0
+            ) + 1
+            generated_changes.append(
+                Change(
+                    project_id=project.id,
+                    component_id=ticket_component.id,
+                    change_number=change_number,
+                    title=change_title,
+                    description=change_description,
+                    created_at=datetime.now(timezone.utc),
+                )
+            )
         ticket = Ticket(
             project_id=project.id,
             ticket_key=ticket_key,
@@ -248,21 +317,12 @@ def _create_generated_changes(db: Session) -> dict[str, int]:
                 **component_context
             ),
             ticket_url=f"https://example.com/jira/{ticket_key}",
-            changes=[
-                Change(
-                    project_id=project.id,
-                    component_id=component.id,
-                    change_number=change_number,
-                    title=change_title,
-                    description=change_description,
-                    created_at=datetime.now(timezone.utc),
-                )
-            ],
+            changes=generated_changes,
         )
         db.add(ticket)
         db.flush()
         created["tickets"] += 1
-        created["changes"] += 1
+        created["changes"] += len(generated_changes)
 
     created["generated_changes"] = change_count
     return created

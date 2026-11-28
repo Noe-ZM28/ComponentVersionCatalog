@@ -1,9 +1,10 @@
-----drop database [ComponentVersionCatalog]
-----create database [ComponentVersionCatalog]
+--drop database [ComponentVersionCatalog]
+--create database [ComponentVersionCatalog]
 
-----drop database CDPDatabase
-----create database CDPDatabase
+--drop database CDPDatabase
+--create database CDPDatabase
 
+--drop database [CDSPLUSP]
 --create database [CDSPLUSP]
 
 --select * from [ComponentVersionCatalog].dbo.change_files
