@@ -3,10 +3,16 @@ from concurrent.futures import ThreadPoolExecutor
 
 from sqlalchemy import text
 
+from ..config import settings
 from ..database import external_engine
 
 
 _PARAMETER_NAME = re.compile(r"^[A-Za-z_][A-Za-z0-9_]*$")
+
+
+def _component_store_procedure(name: str) -> str:
+    suffix = "Dummy" if settings.use_dummy_stored_procedures else ""
+    return f"[CDSPLUSP].[dbo].[SP_Get{name}{suffix}]"
 
 
 def exec_store_procedure(
@@ -74,67 +80,67 @@ def get_component_list(cust_num: str) -> list[list[dict[str, str]]]:
 
 def get_dialogues_list(cust_num: str) -> list[dict[str, str]]:
     return exec_store_procedure(
-        "[CDSPLUSP].[dbo].[SP_GetDialogues]",
+        _component_store_procedure("Dialogues"),
         {"CustNum": cust_num}
     )
 
 def get_scripts_list(cust_num: str) -> list[dict[str, str]]:
     return exec_store_procedure(
-        "[CDSPLUSP].[dbo].[SP_GetScripts]",
+        _component_store_procedure("Scripts"),
         {"CustNum": cust_num}
     )
 
 def get_variables_list(cust_num: str) -> list[dict[str, str]]:
     return exec_store_procedure(
-        "[CDSPLUSP].[dbo].[SP_GetVariables]",
+        _component_store_procedure("Variables"),
         {"CustNum": cust_num}
     )
 
 def get_recurringJobs_list(cust_num: str) -> list[dict[str, str]]:
     return exec_store_procedure(
-        "[CDSPLUSP].[dbo].[SP_GetRecurringJobs]",
+        _component_store_procedure("RecurringJobs"),
         {"CustNum": cust_num}
     )
 
 def get_chains_list(cust_num: str) -> list[dict[str, str]]:
     return exec_store_procedure(
-        "[CDSPLUSP].[dbo].[SP_GetChains]",
+        _component_store_procedure("Chains"),
         {"CustNum": cust_num}
     )
 
 def get_mappings_list(cust_num: str) -> list[dict[str, str]]:
     return exec_store_procedure(
-        "[CDSPLUSP].[dbo].[SP_GetMappings]",
+        _component_store_procedure("Mappings"),
         {"CustNum": cust_num}
     )
 
 def get_file_definitions_list(cust_num: str) -> list[dict[str, str]]:
     return exec_store_procedure(
-        "[CDSPLUSP].[dbo].[SP_GetFileDefinitions]",
+        _component_store_procedure("FileDefinitions"),
         {"CustNum": cust_num}
     )
 
 def get_xml_templates_list(cust_num: str) -> list[dict[str, str]]:
     return exec_store_procedure(
-        "[CDSPLUSP].[dbo].[SP_GetXMLTemplates]",
+        _component_store_procedure("XMLTemplates"),
         {"CustNum": cust_num}
     )
 
 def get_sorting_list(cust_num: str) -> list[dict[str, str]]:
     return exec_store_procedure(
-        "[CDSPLUSP].[dbo].[SP_GetSorting]",
+        _component_store_procedure("Sorting"),
         {"CustNum": cust_num}
     )
 
 def get_splits_list(cust_num: str) -> list[dict[str, str]]:
     return exec_store_procedure(
-        "[CDSPLUSP].[dbo].[SP_GetSplit]",
+        _component_store_procedure("Split"),
         {"CustNum": cust_num}
     )
 
 def get_dictionaries_list(cust_num: str) -> list[dict[str, str]]:
     return exec_store_procedure(
-        "[CDSPLUSP].[dbo].[SP_GetDictionaries]",
+        _component_store_procedure("Dictionaries"),
         {"CustNum": cust_num}
     )
 

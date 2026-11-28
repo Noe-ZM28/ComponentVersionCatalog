@@ -15,6 +15,8 @@ class Settings(BaseSettings):
     # BExternal DB
     external_database_url: str | None = None
 
+    use_dummy_stored_procedures: bool = False
+
     storage_path: str
 
     model_config = SettingsConfigDict(
