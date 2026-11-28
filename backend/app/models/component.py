@@ -42,7 +42,6 @@ class Component(Base):
 
     __table_args__ = (
         UniqueConstraint(
-            "project_id",
-            name="uq_component_project_name",
+            "id",
         ),
     )
