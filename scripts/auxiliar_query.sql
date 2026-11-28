@@ -7,12 +7,12 @@
 --drop database [CDSPLUSP]
 --create database [CDSPLUSP]
 
---select * from [ComponentVersionCatalog].dbo.change_files
---select * from [ComponentVersionCatalog].dbo.[changes]
---select * from [ComponentVersionCatalog].dbo.files
---select * from [ComponentVersionCatalog].dbo.tickets
---select * from [ComponentVersionCatalog].dbo.projects
---select * from [ComponentVersionCatalog].dbo.components
+select * from [ComponentVersionCatalog].dbo.change_files
+select * from [ComponentVersionCatalog].dbo.[changes]
+select * from [ComponentVersionCatalog].dbo.files
+select * from [ComponentVersionCatalog].dbo.tickets
+select * from [ComponentVersionCatalog].dbo.projects
+select * from [ComponentVersionCatalog].dbo.components
 
 --drop table [ComponentVersionCatalog].dbo.projects
 
@@ -26,12 +26,12 @@
 --create database CDPDatabase
 
 
---select * from CDPDatabase.dbo.change_files
---select * from CDPDatabase.dbo.[changes]
---select * from CDPDatabase.dbo.components
---select * from CDPDatabase.dbo.files
---select * from CDPDatabase.dbo.projects
---select * from CDPDatabase.dbo.tickets
+select * from CDPDatabase.dbo.change_files
+select * from CDPDatabase.dbo.[changes]
+select * from CDPDatabase.dbo.components
+select * from CDPDatabase.dbo.files
+select * from CDPDatabase.dbo.projects
+select * from CDPDatabase.dbo.tickets
 
 --update CDPDatabase.dbo.projects set name = 'Banco jsjsj' where cust_num = 312
 
